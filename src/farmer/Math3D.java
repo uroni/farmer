@@ -1,0 +1,255 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+package farmer;
+
+import com.jme.math.Vector3f;
+import com.jme.math.Matrix4f;
+import com.jme.math.*;
+import com.jme.scene.Spatial;
+/**
+ *
+ * @author urpc
+ */
+public class Math3D
+{
+    public static float PI=FastMath.PI;
+    public static float GRAD_PI=180.0f/PI;
+    public static float BOG=PI/180.0f;
+    
+    public static Vector3f getHorizontalAngle(Vector3f vec)
+    {
+        Vector3f angle=new Vector3f(0,0,0);
+        
+        angle.y=FastMath.atan2(vec.x, vec.z);
+        angle.y*=GRAD_PI;
+        
+        if (angle.y < 0.0f) angle.y += 360.0f;
+        if (angle.y >= 360.0f) angle.y -= 360.0f;
+        
+        float z1;
+        z1 = FastMath.sqrt(vec.x*vec.x + vec.z*vec.z);
+        
+        angle.x = FastMath.atan2(z1,vec.y);
+        angle.x *= GRAD_PI;
+        angle.x -= 90.0f;
+        
+        if (angle.x < 0.0f) angle.x+= 360.0f;
+        if (angle.x >= 360) angle.x -= 360.0f;
+
+        return angle;
+    }
+    
+    public static Vector3f getRotationToTarget(Vector3f position, Vector3f target)
+    {
+        if( !position.equals(target))
+        {
+            Vector3f RelativeRotation=new Vector3f(0,0,0);
+            Vector3f vect=target.subtract(position);
+            vect=Math3D.getHorizontalAngle(vect);
+            RelativeRotation.x=vect.x;
+            RelativeRotation.y=vect.y;
+            return RelativeRotation;
+        }
+        else
+            return new Vector3f(0,0,0);
+    }
+    
+    public static float MakeDegreeNormal(float deg)
+    {
+            if(deg>0)
+            {
+                    while(deg-360>0)
+                    {
+                            deg=deg-360;
+                    }
+            }
+            if(deg<0)
+            {
+                    while(deg+360<0)
+                    {
+                            deg=deg+360;
+                    }
+                    deg=360+deg;
+            }
+            return deg;
+    }
+    
+    public static Vector3f getHorizontalAngle2(Vector3f vec)
+    {
+            Vector3f angle=new Vector3f(0,0,0);
+
+            float x=Math.abs(vec.x);
+            float z=Math.abs(vec.z);
+
+            if( x!=0 )
+                    angle.y = (float)Math.atan(z/x);
+            else
+                    angle.y=0;
+            
+            angle.y *= FastMath.RAD_TO_DEG;
+
+            float z1;
+            z1 = FastMath.sqrt(vec.x*vec.x + vec.z*vec.z);
+
+            if(z1!=0 )
+                    angle.x = (float)Math.atan(vec.y/z1);
+            else
+                    angle.x=0;
+
+            angle.x *= FastMath.RAD_TO_DEG;
+
+            if( vec.y<=0 && vec.x >0)
+                    angle.x =(360.0f-angle.x);
+            else if( vec.y>=0 && vec.x<0 )
+                    angle.x=(180-angle.x)+180;
+            else if( vec.y<=0 && vec.x<0 )
+                    angle.x=180+angle.x;
+            else if( vec.x==0 && vec.z>0)
+                    angle.x=360-angle.x;
+            else if( vec.x==0 && vec.z<0 )
+                    angle.x-=180;
+            else if( vec.y>0 && vec.x>0 )
+                    angle.x+=180;
+
+            if( angle.x<90 || angle.x>270 )
+            {
+                    if( vec.z>0 && vec.x>0 )
+                            angle.y=90-angle.y;
+                    else if( vec.z>0 && vec.x<0 )
+                            angle.y=270+angle.y;
+                    else if( vec.z<0 && vec.x<0)
+                            angle.y=270-angle.y;
+                    else if( vec.z<0 && vec.x>0)
+                            angle.y=90+angle.y;
+            }
+            else
+            {
+                    if( vec.z>0 && vec.x>0 )
+                            angle.y=270-angle.y;
+                    else if( vec.z>0 && vec.x<0 )
+                            angle.y=90+angle.y;
+                    else if( vec.z<0 && vec.x<0)
+                            angle.y=90-angle.y;
+                    else if( vec.z<0 && vec.x>0)
+                            angle.y=270+angle.y;
+            }
+
+            angle.y=MakeDegreeNormal(angle.y);
+            angle.x=MakeDegreeNormal(angle.x);
+
+            return angle;
+    }
+    
+    public static Vector3f getRotationToTarget2(Vector3f position, Vector3f target)
+    {
+            if(!position.equals(target))
+            {
+                    Vector3f RelativeRotation=new Vector3f(0,0,0);
+                    Vector3f vect = target.subtract(position);
+
+
+                    Vector3f rot = getHorizontalAngle2(vect);
+
+                    RelativeRotation.x = rot.x;
+                    RelativeRotation.y = rot.y;
+                    return RelativeRotation;
+            }
+            else
+                    return new Vector3f(0,0,0);
+    }
+    
+    public static Vector3f getTarget(Vector3f pos,Vector3f rot,float distance)
+    {
+            Vector3f target=new Vector3f(0,0,1);
+            Matrix4f mat=new Matrix4f();
+            
+            rot.z=0;
+            mat.angleRotation(rot);
+            
+            Math3D.transformVec(target, mat);
+            target.normalizeLocal();
+
+            Vector3f end=pos.add(target.mult(distance));
+
+            return end;
+    }
+    
+    public static Vector3f getTargetDistance(Vector3f position, Vector3f target, float distance)
+    {
+            Vector3f direction=target.subtract(position);
+            direction.normalize();
+            direction.multLocal(distance);
+            return position.add(direction);
+    }
+    
+    public static void setRotation(Spatial node, float x, float y, float z)
+    {
+        Quaternion q=new Quaternion();
+        q.fromAngles(x*FastMath.DEG_TO_RAD, y*FastMath.DEG_TO_RAD, z*FastMath.DEG_TO_RAD);
+        node.setLocalRotation(q);
+    }
+    
+    public static void setRotation(Spatial node, Vector3f vec)
+    {
+        Quaternion q=new Quaternion();
+        q.fromAngles(vec.x*FastMath.DEG_TO_RAD, vec.y*FastMath.DEG_TO_RAD, vec.z*FastMath.DEG_TO_RAD);
+        node.setLocalRotation(q);
+    }
+    
+    public static Vector3f getRotation(Spatial node)
+    {
+        Vector3f v=new Vector3f();
+        Quaternion q=node.getLocalRotation();
+        float []f=new float[3];
+        q.toAngles(f);
+        v.x=f[0]*FastMath.RAD_TO_DEG;
+        v.y=f[1]*FastMath.RAD_TO_DEG;
+        v.z=f[2]*FastMath.RAD_TO_DEG;
+        return v;
+    }
+    
+    public static Vector3f toDegree(Quaternion q)
+    {
+        Vector3f v=new Vector3f();
+        float []f=new float[3];
+        q.toAngles(f);
+        v.x=f[0]*FastMath.RAD_TO_DEG;
+        v.y=f[1]*FastMath.RAD_TO_DEG;
+        v.z=f[2]*FastMath.RAD_TO_DEG;
+        return v;
+    }
+    
+    /*public static Vector3f getTarget2(Vector3f pos, Vector3f rot, float distance)
+    {
+            rot.x*=BOG;
+            Vector3f target=new Vector3f(0,0,0);
+            target.x=FastMath.cos(rot.x);
+            target.z=FastMath.sin(rot.x);
+            target.y=0;
+
+            Matrix4f mat=new Matrix4f();
+            rot.x=0;rot.z=0;
+            mat.angleRotation(rot);
+            Math3D.transformVec(target, mat);
+            target.normalizeLocal();
+
+            return pos.add(target.mult(distance));
+    }*/
+    
+    public static void transformVec(Vector3f vec, Matrix4f mat)
+    {
+        float [] erg=new float[3];
+        
+        erg[0]=vec.x*mat.m00+vec.y*mat.m01+vec.z*mat.m02+mat.m03;
+        erg[1]=vec.x*mat.m10+vec.y*mat.m11+vec.z*mat.m12+mat.m13;
+        erg[2]=vec.x*mat.m20+vec.y*mat.m21+vec.z*mat.m22+mat.m23;
+        
+        vec.x=erg[0];
+        vec.y=erg[1];
+        vec.z=erg[2];
+    }
+
+}

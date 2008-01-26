@@ -1,0 +1,446 @@
+/*
+ * Render3D.java
+ *
+ * Created on November 28, 2007, 5:21 PM
+ *
+ * To change this template, choose Tools | Template Manager
+ * and open the template in the editor.
+ */
+
+package farmer;
+
+import java.awt.Point;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.Canvas;
+import com.jme.app.AbstractGame;
+import com.jme.app.BaseGame;
+import com.jme.app.SimpleGame;
+import com.jme.image.Texture;
+import com.jme.input.FirstPersonHandler;
+import com.jme.input.InputHandler;
+import com.jme.input.KeyBindingManager;
+import com.jme.input.KeyInput;
+import com.jme.input.MouseInput;
+import com.jme.input.joystick.JoystickInput;
+import com.jme.light.PointLight;
+import com.jme.math.Vector3f;
+import com.jme.math.Quaternion;
+import com.jme.renderer.Camera;
+import com.jme.renderer.ColorRGBA;
+import com.jme.scene.Node;
+import com.jme.scene.SceneElement;
+import com.jme.scene.Text;
+import com.jme.scene.shape.Box;
+import com.jme.scene.shape.Sphere;
+import com.jme.scene.state.AlphaState;
+import com.jme.scene.state.LightState;
+import com.jme.scene.state.TextureState;
+import com.jme.scene.state.WireframeState;
+import com.jme.scene.state.ZBufferState;
+import com.jme.scene.*;
+import com.jme.system.DisplaySystem;
+import com.jme.system.JmeException;
+import com.jme.util.TextureManager;
+import com.jme.util.Timer;
+import com.jme.util.geom.Debugger;
+import com.jme.bounding.BoundingSphere;
+import com.jmex.awt.JMECanvas;
+import com.jmex.awt.JMECanvasImplementor;
+import com.jme.scene.shape.Box;
+import com.jme.bounding.BoundingBox;
+import java.net.URL;
+import java.net.URI;
+import com.jmex.model.converters.*;
+import java.io.*;
+import com.jme.util.export.binary.BinaryImporter;
+import com.jme.scene.state.MaterialState;
+import com.jme.scene.state.RenderState;
+import com.jme.renderer.Renderer;
+import com.jme.light.PointLight;
+
+/**
+ *
+ * @author urpc
+ */
+public class Render3D extends JMECanvasImplementor {
+
+    // Items for scene
+    protected Node rootNode, fpsNode;
+    
+    protected Text fps;
+
+    protected Timer timer;
+
+    protected float tpf;
+
+    protected Camera cam;
+
+    protected int width, height;
+    
+    protected DisplaySystem display;
+    
+    protected static String fontLocation=Text.DEFAULT_FONT;
+    
+    private boolean bMoveCam;
+    private Vector3f CameraCenter=new Vector3f(0,0,0);
+    private Point last_mouse;
+    private Vector3f CameraCenterRotation=new Vector3f(0,0,0);
+    private boolean bCamChanged;
+    private float CameraDistance;
+    private Box box;
+    
+    public CameraInterface camera;
+
+    /**
+     * This class should be subclasses - not directly instantiated.
+     * @param width canvas width
+     * @param height canvas height
+     */
+    protected Render3D(int width, int height) {
+        this.width = width;
+        this.height = height;
+    }
+    
+    //@Override
+    public void doSetup() {
+        if( setup )
+            return;
+        
+        display = DisplaySystem.getDisplaySystem();
+        try
+        {
+        display.initForCanvas(width, height);
+        }catch(Exception e)
+        {
+            return;
+        }
+        renderer = display.getRenderer();
+
+        /**
+         * Create a camera specific to the DisplaySystem that works with the
+         * width and height
+         */
+        cam = renderer.createCamera(width, height);
+
+        /** Set up how our camera sees. */
+        cam.setFrustumPerspective(45.0f, (float) width / (float) height, 1,
+                1000);
+        Vector3f loc = new Vector3f(0.0f, 0.0f, 25.0f);
+        Vector3f left = new Vector3f(-1.0f, 0.0f, 0.0f);
+        Vector3f up = new Vector3f(0.0f, 1.0f, 0.0f);
+        Vector3f dir = new Vector3f(0.0f, 0f, -1.0f);
+        /** Move our camera to a correct place and orientation. */
+        cam.setFrame(loc, left, up, dir);
+        /** Signal that we've changed our camera's location/frustum. */
+        cam.update();
+        /** Assign the camera to this renderer. */
+        renderer.setCamera(cam);
+        
+        camera=new CameraRotation(cam);
+        camera.update();
+        
+        
+        /** Set a black background. */
+        renderer.setBackgroundColor(ColorRGBA.black.clone());
+
+        /** Get a high resolution timer for FPS updates. */
+        timer = Timer.getTimer();
+
+        newRootNode();
+        
+        /*box=new Box("MyBox", new Vector3f(0,0,0), 5,5,5);
+        box.setModelBound(new BoundingBox());
+        box.updateModelBound();               
+        
+        rootNode.attachChild(box);*/
+       
+        try
+        {
+            com.jme.util.resource.SimpleResourceLocator srl=new com.jme.util.resource.SimpleResourceLocator(this.getClass().getClassLoader().getResource("."));
+            com.jme.util.resource.ResourceLocatorTool.addResourceLocator(com.jme.util.resource.ResourceLocatorTool.TYPE_TEXTURE, srl);
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        
+        
+        /*PointLight l=new PointLight();
+        l.setLocation(new Vector3f(0,100,0));
+        l.setEnabled(true);
+        
+        LightState ls=renderer.createLightState();
+        ls.attach(l);
+        rootNode.setRenderState(ls);
+        rootNode.updateRenderState();*/
+        
+        /*Node ps=this.loadMdl("Petrischale_v2.3ds");
+        
+        this.addtoScene(ps);
+        this.makeTransparent( ps);*/
+
+        //initView();
+        setup = true;
+        timer.reset();
+    }
+    
+    public Box getBox(){ return box; }
+    
+    public void initView()
+    {
+        /*AlphaState as1 = display.getRenderer().createAlphaState();
+            
+        as1.setBlendEnabled(true);
+        as1.setSrcFunction(AlphaState.SB_SRC_ALPHA);
+        as1.setDstFunction(AlphaState.DB_ONE);
+        as1.setTestEnabled(true);
+        as1.setTestFunction(AlphaState.TF_GREATER);
+        as1.setEnabled(false);
+        
+        rootNode.setRenderState(as1);*/
+       
+        
+    }
+    
+    public void doUpdate() {
+        if(!setup)
+            return;
+
+        timer.update();
+        /** Update tpf to time per frame according to the Timer. */
+        tpf = timer.getTimePerFrame();
+
+        rootNode.updateGeometricState(tpf, true);
+        
+        camera.update();
+        
+    }
+    
+    public java.awt.Canvas createCanvas(int width, int height)
+    {
+        java.awt.Canvas ret = DisplaySystem.getDisplaySystem("lwjgl").createCanvas(width, height);
+        /*ret.addComponentListener(new ComponentAdapter() {
+                public void componentResized(ComponentEvent ce) {
+                    doResize();
+                }
+            });*/
+        JMECanvas jmeCanvas = ( (JMECanvas) ret );
+        jmeCanvas.setImplementor(this);
+        return ret;
+    }
+    
+    protected void doResize()
+    {
+        System.out.println("Resizing...");
+        resizeCanvas(width, height);
+    }
+    
+    public void doResize(int width, int height)
+    {
+        this.width=width;
+        this.height=height;
+        if( setup)
+            resizeCanvas(width, height);
+    }
+
+    public void doRender() {
+        if( !setup)
+            return;
+        
+        renderer.clearBuffers();
+        //renderer.renderQueue();
+        renderer.draw(rootNode);
+        
+        renderer.displayBackBuffer();
+    }
+
+    public Camera getCamera() {
+        return cam;
+    }
+
+    public Node getRootNode() {
+        return rootNode;
+    }
+
+    public float getTimePerFrame() {
+        return tpf;
+    }
+    
+    public void setMoveCamera(boolean b)
+    {
+        bMoveCam=b;
+    }
+    
+    public Node loadMdl(String name)
+    {
+        Node ret=null;
+        URL modelURL=this.getClass().getClassLoader().getResource( name);
+        if( modelURL==null )
+        {
+            System.out.println("Resource "+name+" not found");
+            return null;
+        }
+        FormatConverter converter = new MaxToJme();
+        ByteArrayOutputStream BO=new ByteArrayOutputStream();
+        try
+        {
+       
+            converter.convert(modelURL.openStream(), BO);
+            ret=(Node)BinaryImporter.getInstance().load(new ByteArrayInputStream(BO.toByteArray()));
+            ret.setModelBound(new BoundingBox());
+            ret.updateModelBound();
+            
+            
+            MaterialState ms = DisplaySystem.getDisplaySystem().getRenderer().createMaterialState();
+            ms.setAmbient(new ColorRGBA(1.f, 1.f, 1.f, 1.0f));
+            ms.setDiffuse(new ColorRGBA(2.f, 2.f, 2.f, 1.0f));
+            ms.setShininess(128);
+            ms.setColorMaterial(MaterialState.CM_AMBIENT_AND_DIFFUSE);
+            ms.setMaterialFace(MaterialState.MF_FRONT);
+            ret.setRenderState(ms);
+            ret.updateRenderState();
+            
+            ret.setLocalScale(5);
+            Math3D.setRotation(ret, 0,0,180);
+     
+        } catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+        ret.setRenderQueueMode(Renderer.QUEUE_OPAQUE);
+        return ret;
+    }
+    
+    public void addtoScene(Spatial node)
+    {
+        rootNode.attachChild(node);
+        rootNode.updateRenderState();
+    }
+    
+    public void removeFromScene(Spatial node)
+    {
+        rootNode.detachChild(node);
+        rootNode.updateRenderState();
+    }
+    
+    public MaterialState createMaterialState()
+    {
+        return DisplaySystem.getDisplaySystem().getRenderer().createMaterialState();
+    }
+    
+    public TextureState createTextureState()
+    {
+        return DisplaySystem.getDisplaySystem().getRenderer().createTextureState();
+    }
+    
+    public AlphaState createAlphaState()
+    {
+        return DisplaySystem.getDisplaySystem().getRenderer().createAlphaState();
+    }
+    
+    public LightState createLightState()
+    {
+        return DisplaySystem.getDisplaySystem().getRenderer().createLightState();
+    }
+    
+    public void makeTransparent(Node node)
+    {
+        for(int i=0;i<node.getQuantity();++i)
+        {
+            Spatial s=node.getChild(i);
+            if( s instanceof Geometry)
+            {
+                Geometry g=(Geometry)s;
+                AlphaState as=renderer.createAlphaState();
+                as.setBlendEnabled(true);
+                as.setSrcFunction(AlphaState.DB_SRC_ALPHA);
+                as.setDstFunction(AlphaState.DB_ONE_MINUS_SRC_ALPHA);
+                as.setTestEnabled(false);
+                as.setTestFunction(AlphaState.TF_GEQUAL);
+                as.setEnabled(true);
+                
+
+                g.setRenderState(as);
+                g.updateRenderState();
+            }
+        }
+        
+        node.setRenderQueueMode(Renderer.QUEUE_TRANSPARENT);
+    }
+    
+    public void enableLightning(Spatial node)
+    {
+        node.setRenderQueueMode(Renderer.QUEUE_OPAQUE);
+        node.setLightCombineMode(LightState.INHERIT);
+        node.updateRenderState();
+    }
+    
+    public void disableLightning(Spatial node)
+    {
+        node.setLightCombineMode(LightState.OFF);
+        node.setRenderQueueMode(Renderer.QUEUE_OPAQUE);
+        node.updateRenderState();
+    }
+    
+    public void newRootNode()
+    {
+        rootNode = new Node("rootNode");
+
+       
+        ZBufferState buf = renderer.createZBufferState();
+        buf.setEnabled(true);
+        buf.setWritable(true);
+        buf.setFunction(ZBufferState.CF_LEQUAL);
+
+        rootNode.setRenderState(buf);
+        
+        
+        
+        rootNode.setRenderQueueMode(Renderer.QUEUE_OPAQUE);
+        
+        rootNode.updateGeometricState(0.0f, true);
+        rootNode.updateRenderState();
+    }
+    
+    public void setOpacy(Node node, int pc)
+    {
+        float op=(float)pc/100.f;
+        ColorRGBA c=new ColorRGBA(1.f,1.f,1.f,op);
+        
+        for(int i=0;i<node.getQuantity();++i)
+        {
+            Spatial s=node.getChild(i);
+            if( s instanceof Geometry)
+            {
+                Geometry g=(Geometry)s;
+                AlphaState as=renderer.createAlphaState();
+                as.setBlendEnabled(true);
+                as.setSrcFunction(AlphaState.DB_SRC_ALPHA);
+                as.setDstFunction(AlphaState.DB_ONE_MINUS_SRC_ALPHA);
+                as.setTestEnabled(false);
+                as.setTestFunction(AlphaState.TF_GEQUAL);
+                as.setEnabled(true);
+
+                g.setRenderState(as);
+                g.setColorBuffer(0, null);
+                g.setDefaultColor(c);
+                g.updateRenderState();
+            }
+            
+            /*if( s instanceof Node)
+            {
+                setColor(c, (Node)s);
+            }*/
+        }
+        
+        node.setLightCombineMode(LightState.OFF);
+        node.setRenderQueueMode(Renderer.QUEUE_TRANSPARENT);
+        node.updateRenderState();
+    }
+    
+    public boolean isInScene(Spatial node)
+    {
+        return rootNode.hasChild(node);
+    }
+}
