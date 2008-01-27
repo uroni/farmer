@@ -30,6 +30,7 @@ public class MyLight implements Positionable, Serializable
     private transient Sphere ball;
     private transient static LightState ls;
     private int opacity=100;
+    private int scale=100;
     
     
     public MyLight(String name, Render3D renderer)
@@ -57,7 +58,7 @@ public class MyLight implements Positionable, Serializable
         light.setConstant(0.f);
         light.setLinear(0.012f);
         light.setQuadratic(0.f);
-        
+
         if( ls==null)
             ls=renderer.createLightState();
         ls.attach(light);
@@ -112,7 +113,28 @@ public class MyLight implements Positionable, Serializable
     
     public void setOpacity(int pc)
     {
-        if( pc==0 )
+          
+        light.setLinear(((float)(100-pc)/100.f)*0.062f);
+        
+        opacity=pc;
+    }
+    
+    public int getOpacity(){ return opacity; }
+    
+    public int getReversed()
+    {
+        return 1;
+    }
+    
+    public int getScale()
+    {
+        return scale;
+    }
+    public void setScale(int s)
+    {
+        scale=s;
+        
+        if( s<50 )
         {
             renderer.removeFromScene(ball);
         }
@@ -121,14 +143,5 @@ public class MyLight implements Positionable, Serializable
             if(renderer.isInScene(ball)==false)
                 renderer.addtoScene(ball);            
         }
-        
-        light.setLinear(((float)(100-pc)/100.f)*0.062f);
-        
-        opacity=pc;
-    }
-    
-    public int getReversed()
-    {
-        return 1;
     }
 }

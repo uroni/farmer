@@ -35,4 +35,7 @@ public class Settings implements Serializable
     public static float ctrl_light_pos_step=0.5f;
     public static float ctrl_solid_pos_step=0.2f;
     public static float ctrl_solid_rot_step=0.6f;
+    public static float ctrl_material_pos_step=0.2f;
+    public static float ctrl_material_rot_step=0.6f;
+    public static float ctrl_acceleration_per_sec=2.5f;
 }

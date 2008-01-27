@@ -10,15 +10,16 @@ import com.jme.scene.Node;
 import com.jme.scene.Spatial;
 import com.jme.scene.shape.*;
 import com.jme.math.Vector3f;
+
 import java.io.File;
 import java.io.Serializable;
-
+import java.util.*;
 
 /**
  *
  * @author Martin
  */
-public class Solid implements Positionable, Serializable
+public class Material implements Positionable, Serializable
 {
     private Vector3f position=new Vector3f(0,0,0);
     private Vector3f rotation=new Vector3f(0,0,0);
@@ -30,10 +31,14 @@ public class Solid implements Positionable, Serializable
     private File file;
     private int scale=5;
     
-    private static int numSolid=0;
+    private static int numMat=0;
     
+    public Node getMaterialNode()
+    {
+        return  node;
+    }
     
-    public Solid(Render3D renderer, File file)
+    public Material(Render3D renderer, File file)
     {
         this.file=file;
         init(renderer);
@@ -41,11 +46,51 @@ public class Solid implements Positionable, Serializable
     
     public void init(Render3D renderer)
     {
-        currnum=++numSolid;
+        currnum=++numMat;
         this.renderer=renderer;
         node=renderer.loadMdl(file.getName());
-        node.setLocalScale(scale);
         setOpacity(opacity);
+        node.setLocalScale(new Vector3f(scale,scale,scale));
+    }
+    
+    private boolean testPoint(Vector3f orig, Vector3f point)
+    {
+        boolean b=renderer.collides(orig, point, node, null);
+        if( b )
+           return false;
+        return true;
+    }
+    
+    public void calculateDensity(float density)
+    {
+        Vector3f center=node.getWorldBound().getCenter();    
+        
+        Points<Boolean> points=new Points<Boolean>();
+        List<Vector3f> pointlist=new LinkedList<Vector3f>();
+        
+        List<Vector3f> queue=new LinkedList<Vector3f>();
+        queue.add(center);
+        pointlist.add(center);
+        points.addPoint(center, true);
+        
+        while(queue.size()!=0)
+        {
+            Vector3f p=queue.get(0);
+            queue.remove(0);
+            
+            Vector3f [] pts=Math3D.getSurroundingPoints(p, density);
+            for(int i=0;i<pts.length;++i)
+            {
+                if( points.containsPoint(pts[i])==false && testPoint(p, pts[i]) )
+                {
+                    queue.add(pts[i]);
+                    pointlist.add(pts[i]);
+                    points.addPoint(p, true);
+                }
+            }
+        }
+        
+        System.out.println("Found "+pointlist.size()+" Points");
     }
     
     public void setOpacity(int pc)
@@ -73,8 +118,6 @@ public class Solid implements Positionable, Serializable
         opacity=pc;
     }
     
-    public int getOpacity(){ return opacity; }
-    
     public void update()
     {
         position=node.getLocalTranslation();
@@ -83,7 +126,7 @@ public class Solid implements Positionable, Serializable
     
     public String getName()
     {
-        return "Solid "+currnum;
+        return "Material "+currnum;
     }    
     
     public float getRotStep(){ return Settings.ctrl_solid_rot_step; }
@@ -92,7 +135,6 @@ public class Solid implements Positionable, Serializable
     public void setPosition(Vector3f pos)
     {
         node.setLocalTranslation(pos);
-        node.updateGeometricState(0.f, false);
     }
     
     public Vector3f getPosition()
@@ -103,7 +145,6 @@ public class Solid implements Positionable, Serializable
     public void setRotation(Vector3f rot)
     {
         Math3D.setRotation(node, rot);
-        node.updateGeometricState(0.f, false);
     }
     
     public Vector3f getRotation()
@@ -116,6 +157,8 @@ public class Solid implements Positionable, Serializable
         return 1;
     }
     
+    public int getOpacity(){ return opacity; }
+    
     public int getScale()
     {
         return scale;
@@ -123,6 +166,6 @@ public class Solid implements Positionable, Serializable
     public void setScale(int s)
     {
         scale=s;
-        node.setLocalScale(s);
+        node.setLocalScale(new Vector3f(s,s,s));
     }
 }

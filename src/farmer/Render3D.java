@@ -58,6 +58,12 @@ import com.jme.scene.state.MaterialState;
 import com.jme.scene.state.RenderState;
 import com.jme.renderer.Renderer;
 import com.jme.light.PointLight;
+import com.jme.util.geom.BufferUtils;
+import java.nio.*;
+import com.jme.bounding.CollisionTree;
+import com.jme.bounding.CollisionTreeManager;
+import com.jme.math.Ray;
+import com.jme.intersection.TrianglePickResults;
 
 /**
  *
@@ -121,6 +127,9 @@ public class Render3D extends JMECanvasImplementor {
          * Create a camera specific to the DisplaySystem that works with the
          * width and height
          */
+        
+        CollisionTreeManager.getInstance().setTreeType(CollisionTree.AABB_TREE);
+        
         cam = renderer.createCamera(width, height);
 
         /** Set up how our camera sees. */
@@ -272,8 +281,10 @@ public class Render3D extends JMECanvasImplementor {
         bMoveCam=b;
     }
     
+    private static int nummdl=0;
     public Node loadMdl(String name)
     {
+        
         Node ret=null;
         URL modelURL=this.getClass().getClassLoader().getResource( name);
         if( modelURL==null )
@@ -290,6 +301,7 @@ public class Render3D extends JMECanvasImplementor {
             ret=(Node)BinaryImporter.getInstance().load(new ByteArrayInputStream(BO.toByteArray()));
             ret.setModelBound(new BoundingBox());
             ret.updateModelBound();
+            ret.setName("3dsModel "+(++nummdl));
             
             
             MaterialState ms = DisplaySystem.getDisplaySystem().getRenderer().createMaterialState();
@@ -426,6 +438,7 @@ public class Render3D extends JMECanvasImplementor {
                 g.setColorBuffer(0, null);
                 g.setDefaultColor(c);
                 g.updateRenderState();
+                g.updateGeometricState(0.f, false);
             }
             
             /*if( s instanceof Node)
@@ -442,5 +455,61 @@ public class Render3D extends JMECanvasImplementor {
     public boolean isInScene(Spatial node)
     {
         return rootNode.hasChild(node);
+    }
+    
+    public boolean collides(Vector3f lineStart, Vector3f lineEnd, Spatial target, Node exclude)
+    {    
+        CollisionTreeManager.getInstance().removeCollisionTree(exclude);
+        if( target==null)
+            target=rootNode;
+        {
+            Vector3f vec=lineEnd.clone();
+            vec.subtractLocal(lineStart);
+            float distance=vec.length();
+            vec.normalizeLocal();
+            Ray ray=new Ray(lineStart, vec);
+            TrianglePickResults trp=new TrianglePickResults();
+            trp.setCheckDistance(true);
+            rootNode.findPick(ray, trp);
+            
+            for(int i=0;i<trp.getNumber();++i)
+            {
+                if( trp.getPickData(i).getDistance()<=distance )
+                {
+                    if( exclude!=null && exclude.hasChild(trp.getPickData(i).getTargetMesh().getParentGeom()) )
+                        continue;
+                    System.out.println(trp.getPickData(i).getTargetMesh().getParentGeom().getName() + " " + trp.getPickData(i).getDistance());
+                    return true;
+                }
+            }
+            return false;            
+        }
+    }
+    
+    private boolean collide_rec(Line l, Node t, Spatial exclude)
+    {
+        if( l.hasCollision(t, true))
+            return true;
+        
+        for(int i=0;i<t.getQuantity();++i)
+        {
+            Spatial s=t.getChild(i);
+            if( s==exclude)
+                continue;
+            
+            /*if( s instanceof Node)
+            {
+                if(collide_rec(l, (Node)s, exclude))
+                    return true;
+            }*/
+            if( l.hasCollision(s, true))
+            {
+                return true;
+            }
+            
+            
+        }
+        
+        return false;
     }
 }

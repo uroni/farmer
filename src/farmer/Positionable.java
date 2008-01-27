@@ -25,6 +25,10 @@ public interface Positionable {
     public String getName();
     
     public void setOpacity(int pc);
+    public int getOpacity();
     
     public int getReversed();
+    
+    public int getScale();
+    public void setScale(int s);
 }

@@ -251,5 +251,24 @@ public class Math3D
         vec.y=erg[1];
         vec.z=erg[2];
     }
-
+    
+    public static Vector3f[] getSurroundingPoints(Vector3f p, float dist)
+    {
+        Vector3f [] ret=new Vector3f[6];
+        
+        ret[0]=new Vector3f(p);
+        ret[0].x+=dist;
+        ret[1]=new Vector3f(p);
+        ret[1].x-=dist;
+        ret[2]=new Vector3f(p);
+        ret[2].y+=dist;
+        ret[3]=new Vector3f(p);
+        ret[3].y-=dist;
+        ret[4]=new Vector3f(p);
+        ret[4].z+=dist;
+        ret[5]=new Vector3f(p);
+        ret[5].z-=dist;
+        
+        return ret;
+    }
 }

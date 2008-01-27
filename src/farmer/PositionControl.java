@@ -21,7 +21,9 @@ public class PositionControl
     public final static int ROT_LEFT=6;
     public final static int ROT_RIGHT=7;
     public final static int ROT_UP=8;
-    public final static int ROT_DOWN=9;    
+    public final static int ROT_DOWN=9;
+    
+    private float accel=1.f;
     
     
     private List<Positionable> pos=new ArrayList<Positionable>();
@@ -56,13 +58,13 @@ public class PositionControl
         if(!pos_back)
         {    
             Vector3f p=sel.getPosition();
-            p.y-=sel.getPosStep()*sel.getReversed();
+            p.y-=sel.getPosStep()*sel.getReversed()*accel;
             sel.setPosition(p);
         }
         else
         {
             Vector3f p=sel.getPosition();
-            p.z-=sel.getPosStep()*sel.getReversed();
+            p.z-=sel.getPosStep()*sel.getReversed()*accel;
             sel.setPosition(p);
         }
     }
@@ -73,13 +75,13 @@ public class PositionControl
         if(!pos_back)
         {
             Vector3f p=sel.getPosition();
-            p.y+=sel.getPosStep()*sel.getReversed();
+            p.y+=sel.getPosStep()*sel.getReversed()*accel;
             sel.setPosition(p);
         }
         else
         {
             Vector3f p=sel.getPosition();
-            p.z+=sel.getPosStep()*sel.getReversed();
+            p.z+=sel.getPosStep()*sel.getReversed()*accel;
             sel.setPosition(p);
         }
     }
@@ -88,7 +90,7 @@ public class PositionControl
     {
         if( sel==null )return;
         Vector3f p=sel.getPosition();
-        p.x+=sel.getPosStep()*sel.getReversed();
+        p.x+=sel.getPosStep()*sel.getReversed()*accel;
         sel.setPosition(p);
     }
     
@@ -96,7 +98,7 @@ public class PositionControl
     {
         if( sel==null )return;
         Vector3f p=sel.getPosition();
-        p.x-=sel.getPosStep()*sel.getReversed();
+        p.x-=sel.getPosStep()*sel.getReversed()*accel;
         sel.setPosition(p);
     }
     
@@ -104,7 +106,7 @@ public class PositionControl
     {
         if( sel==null )return;
         Vector3f p=sel.getRotation();
-        p.x+=sel.getRotStep()*sel.getReversed();
+        p.x+=sel.getRotStep()*sel.getReversed()*accel;
         sel.setRotation(p);
     }
     
@@ -112,7 +114,7 @@ public class PositionControl
     {
         if( sel==null )return;
         Vector3f p=sel.getRotation();
-        p.x-=sel.getRotStep()*sel.getReversed();
+        p.x-=sel.getRotStep()*sel.getReversed()*accel;
         sel.setRotation(p);
     }
     
@@ -120,7 +122,7 @@ public class PositionControl
     {
         if( sel==null )return;
         Vector3f p=sel.getRotation();
-        p.y-=sel.getRotStep()*sel.getReversed();
+        p.y-=sel.getRotStep()*sel.getReversed()*accel;
         sel.setRotation(p);
     }
     
@@ -128,7 +130,7 @@ public class PositionControl
     {
         if( sel==null )return;
         Vector3f p=sel.getRotation();
-        p.y+=sel.getRotStep()*sel.getReversed();
+        p.y+=sel.getRotStep()*sel.getReversed()*accel;
         sel.setRotation(p);
     }
     
@@ -139,21 +141,29 @@ public class PositionControl
     
     public void setOpacity(int pc)
     {
+        if( sel==null )return;
         sel.setOpacity(pc);
     }
     
-    public void performAction(int a)
+    public void setScale(int s)
     {
+        if( sel==null )return;
+        sel.setScale(s);
+    }
+    
+    public void performAction(int a, float acc)
+    {
+        accel=acc;
         switch(a)
         {
-            case POS_UP: pos_up(); return;
-            case POS_DOWN: pos_down(); return;
-            case POS_LEFT: pos_left(); return;
-            case POS_RIGHT: pos_right(); return;
-            case ROT_UP: rot_up(); return;
-            case ROT_DOWN: rot_down(); return;
-            case ROT_LEFT: rot_left(); return;
-            case ROT_RIGHT: rot_right(); return;
+            case POS_UP: pos_up(); accel=1.f; return;
+            case POS_DOWN: pos_down(); accel=1.f; return;
+            case POS_LEFT: pos_left(); accel=1.f; return;
+            case POS_RIGHT: pos_right(); accel=1.f; return;
+            case ROT_UP: rot_up(); accel=1.f; return;
+            case ROT_DOWN: rot_down(); accel=1.f; return;
+            case ROT_LEFT: rot_left(); accel=1.f; return;
+            case ROT_RIGHT: rot_right(); accel=1.f; return;
         }
     }
 }

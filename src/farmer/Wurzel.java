@@ -111,6 +111,18 @@ public class Wurzel implements Positionable, Serializable{
         
     }
     
+    public int getOpacity(){ return 100; }
+    
     public float getRotStep(){ return Settings.ctrl_root_rot_step; }
     public float getPosStep(){ return Settings.ctrl_root_pos_step; }
+    
+    public int getScale()
+    {
+        return 5;
+    }
+    
+    public void setScale(int s)
+    {
+        
+    }
 }

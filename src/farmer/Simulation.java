@@ -6,6 +6,8 @@
 package farmer;
 
 
+import com.jme.scene.Node;
+
 import java.util.*;
 import java.io.*;
 /**
@@ -17,6 +19,7 @@ public class Simulation implements Serializable
     private List<Korn> corns=new ArrayList<Korn>();
     private List<MyLight> lights=new ArrayList<MyLight>();
     private List<Solid> solids=new ArrayList<Solid>();
+    private List<Material> materials=new ArrayList<Material>();
     private transient Render3D renderer;
     private transient MainForm form;
     
@@ -58,6 +61,16 @@ public class Simulation implements Serializable
                 form.addSolid(s, null);
             }
         }
+        
+        {
+            ListIterator<Material> it=materials.listIterator();
+            while(it.hasNext())
+            {
+                Material s=it.next();
+                s.init(renderer);
+                form.addMaterial(s, null);
+            }
+        }
     }
     
     public void addLight(MyLight l)
@@ -73,6 +86,11 @@ public class Simulation implements Serializable
     public void addCorn(Korn k)
     {
         corns.add(k);
+    }
+    
+    public void addMaterial(Material m)
+    {
+        materials.add(m);
     }
     
     public int getNumCorns()
@@ -101,6 +119,15 @@ public class Simulation implements Serializable
             while(it.hasNext())
             {
                 Solid s=it.next();
+                s.update();
+            }
+        }
+        
+        {
+            ListIterator<Material> it=materials.listIterator();
+            while(it.hasNext())
+            {
+                Material s=it.next();
                 s.update();
             }
         }
@@ -143,6 +170,16 @@ public class Simulation implements Serializable
         {
             System.out.println("ClassNotFoundException while reading Objects: "+e.getMessage() );
             return null;
+        }
+    }
+    
+    public void caclulateDensity(float density)
+    {
+        ListIterator<Material> it=materials.listIterator();
+        while(it.hasNext())
+        {
+            Material m=it.next();
+            m.calculateDensity(density);
         }
     }
     

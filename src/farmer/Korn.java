@@ -26,8 +26,10 @@ public class Korn implements Positionable, Serializable
     private transient Render3D renderer;
     private List<Wurzel> wurzeln=new LinkedList<Wurzel>();
     private transient int sel_wurzel_idx=-1;
-    private Vector3f position, rotation;
+    private Vector3f position=new Vector3f(0,0,0);
+    private Vector3f rotation=new Vector3f(0,0,0);;
     private int opacity=100;
+    private int scale=5;
     
     private static int kornnum=0;
     private transient int curr_kornnum;
@@ -55,6 +57,7 @@ public class Korn implements Positionable, Serializable
         
         if(load)
         {
+            model.setLocalScale(scale);
             model.setLocalTranslation(position);
             Math3D.setRotation(model, rotation);           
             
@@ -71,17 +74,21 @@ public class Korn implements Positionable, Serializable
     
     public void setPosition(Vector3f pos)
     {
+        if( renderer.collides(position, pos, null, model))
+            return;
         model.setLocalTranslation(pos);
+        model.updateGeometricState(0.f, false);
     }
     
     public Vector3f getPosition()
     {
-        return model.getLocalTranslation();
+        return model.getLocalTranslation().clone();
     }
     
     public void setRotation(Vector3f rot)
     {
         Math3D.setRotation(model, rot);
+        model.updateGeometricState(0.f, false);
     }
     
     public Vector3f getRotation()
@@ -167,6 +174,9 @@ public class Korn implements Positionable, Serializable
         
         opacity=pc;
     }
+    
+    public int getOpacity(){ return opacity; }
+    
     public int getReversed()
     {
         return 1;
@@ -175,6 +185,16 @@ public class Korn implements Positionable, Serializable
     public void step(float time)
     {
         
+    }
+    
+    public int getScale()
+    {
+        return scale;
+    }
+    public void setScale(int s)
+    {
+        scale=s;
+        model.setLocalScale(s);
     }
     
     
