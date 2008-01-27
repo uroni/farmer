@@ -64,6 +64,7 @@ import com.jme.bounding.CollisionTree;
 import com.jme.bounding.CollisionTreeManager;
 import com.jme.math.Ray;
 import com.jme.intersection.TrianglePickResults;
+import com.jme.image.Image;
 
 /**
  *
@@ -435,7 +436,6 @@ public class Render3D extends JMECanvasImplementor {
                 as.setEnabled(true);
 
                 g.setRenderState(as);
-                g.setColorBuffer(0, null);
                 g.setDefaultColor(c);
                 g.updateRenderState();
                 g.updateGeometricState(0.f, false);

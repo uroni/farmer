@@ -106,8 +106,7 @@ public class Material implements Positionable, Serializable
             
             if( pc==100 )
             {
-                renderer.enableLightning(node);                
-                renderer.makeTransparent(node);
+                renderer.enableLightning(node);
             }
             else
             {

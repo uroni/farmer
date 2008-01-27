@@ -497,7 +497,7 @@ public class MainForm extends javax.swing.JFrame {
 
         jLabel13.setText("Punkteabstand:");
 
-        jTextField1.setText("0.5");
+        jTextField1.setText("5");
 
         jButton15.setText("Starten");
         jButton15.addActionListener(new java.awt.event.ActionListener() {
