@@ -15,7 +15,7 @@ import com.jme.scene.shape.Box;
  *
  * @author urpc
  */
-public class CameraFPS implements CameraInterface
+public class CameraFPS extends CameraInterface
 {
     private Point last_mouse;
     private boolean changed;
@@ -94,4 +94,48 @@ public class CameraFPS implements CameraInterface
     {
     }
     
+    public float getViewDistance()
+    {
+        return 0.f;
+    }
+            
+    
+    public void setCamera(Camera cam)
+    {
+        this.cam=cam;
+        changed=true;
+    }
+    
+    public void setPosition(Vector3f pos)
+    {
+        cam.setLocation(pos);
+    }
+    
+    public Vector3f getPosition()
+    {
+        return cam.getLocation();
+    }
+    
+    public void setRotation(Vector3f rot)
+    {
+        
+    }
+    
+    public Vector3f getRotation()
+    {
+        return new Vector3f(0,0,0);
+    }
+    
+    public float getRotStep(){ return 0.f; }
+    public float getPosStep(){ return Settings.ctrl_fpscamera_pos_step; }
+    
+    public String getName(){ return "FPS-Camera"; }
+    
+    public void setOpacity(int pc){}
+    public int getOpacity(){return 0; }
+    
+    public int getReversed(){ return 1;}
+    
+    public int getScale(){ return 0; }
+    public void setScale(int s){}    
 }

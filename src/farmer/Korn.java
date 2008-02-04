@@ -74,8 +74,6 @@ public class Korn implements Positionable, Serializable
     
     public void setPosition(Vector3f pos)
     {
-        if( renderer.collides(position, pos, null, model))
-            return;
         model.setLocalTranslation(pos);
         model.updateGeometricState(0.f, false);
     }

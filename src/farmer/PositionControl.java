@@ -29,6 +29,7 @@ public class PositionControl
     private List<Positionable> pos=new ArrayList<Positionable>();
     Positionable sel=null;
     boolean pos_back=false;
+    private int selidx=-1;
     
     public int getNumPositionables()
     {
@@ -37,6 +38,7 @@ public class PositionControl
     
     public void addPositionable(Positionable p)
     {
+        selidx=pos.size();
         pos.add(p);
     }
     
@@ -50,6 +52,12 @@ public class PositionControl
     {
         ListIterator<Positionable> it=pos.listIterator(idx);
         sel=it.next();
+        selidx=idx;
+    }
+    
+    public int getSelectedIdx()
+    {
+        return selidx;
     }
     
     public void pos_up()

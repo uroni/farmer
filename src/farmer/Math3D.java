@@ -271,4 +271,104 @@ public class Math3D
         
         return ret;
     }
+    
+    public static Vector3f[] getSurroundingPointsPlusOwn(Vector3f p, float dist)
+    {
+        Vector3f [] ret=new Vector3f[27];
+        
+        ret[0]=new Vector3f(p);
+        ret[0].x+=dist;
+        ret[1]=new Vector3f(p);
+        ret[1].x-=dist;
+        ret[2]=new Vector3f(p);
+        ret[2].y+=dist;
+        ret[3]=new Vector3f(p);
+        ret[3].y-=dist;
+        ret[4]=new Vector3f(p);
+        ret[4].z+=dist;
+        ret[5]=new Vector3f(p);
+        ret[5].z-=dist;
+        
+        ret[6]=new Vector3f(p);
+        ret[6].z-=dist;
+        ret[6].y-=dist;
+        ret[7]=new Vector3f(p);
+        ret[7].z-=dist;
+        ret[7].y+=dist;
+        ret[8]=new Vector3f(p);
+        ret[8].z-=dist;
+        ret[8].x-=dist;
+        ret[9]=new Vector3f(p);
+        ret[9].z-=dist;
+        ret[9].x+=dist;
+        ret[10]=new Vector3f(p);
+        ret[10].z+=dist;
+        ret[10].y-=dist;
+        ret[11]=new Vector3f(p);
+        ret[11].z+=dist;
+        ret[11].y+=dist;
+        ret[12]=new Vector3f(p);
+        ret[12].z+=dist;
+        ret[12].x-=dist;
+        ret[13]=new Vector3f(p);
+        ret[13].z+=dist;
+        ret[13].x+=dist;
+        
+        ret[14]=new Vector3f(p);
+        ret[14].y-=dist;
+        ret[14].x-=dist;
+        ret[15]=new Vector3f(p);
+        ret[15].y-=dist;
+        ret[15].x+=dist;
+        ret[16]=new Vector3f(p);
+        ret[16].y+=dist;
+        ret[16].x-=dist;
+        ret[17]=new Vector3f(p);
+        ret[17].y+=dist;
+        ret[17].x+=dist;
+        
+        ret[18]=new Vector3f(p);
+        ret[18].y-=dist;
+        ret[18].x-=dist;
+        ret[18].z-=dist;
+        
+        ret[19]=new Vector3f(p);
+        ret[19].y+=dist;
+        ret[19].x-=dist;
+        ret[19].z-=dist;
+        
+        ret[20]=new Vector3f(p);
+        ret[20].y-=dist;
+        ret[20].x+=dist;
+        ret[20].z-=dist;
+        
+        ret[21]=new Vector3f(p);
+        ret[21].y-=dist;
+        ret[21].x-=dist;
+        ret[21].z+=dist;
+        
+        ret[22]=new Vector3f(p);
+        ret[22].y+=dist;
+        ret[22].x+=dist;
+        ret[22].z-=dist;
+        
+        ret[23]=new Vector3f(p);
+        ret[23].y+=dist;
+        ret[23].x-=dist;
+        ret[23].z+=dist;
+        
+        ret[24]=new Vector3f(p);
+        ret[24].y-=dist;
+        ret[24].x+=dist;
+        ret[24].z+=dist;
+        
+        ret[25]=new Vector3f(p);
+        ret[25].y+=dist;
+        ret[25].x+=dist;
+        ret[25].z+=dist;
+        
+        ret[26]=p.clone();
+        
+        return ret;
+    }
 }

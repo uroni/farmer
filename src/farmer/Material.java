@@ -30,6 +30,7 @@ public class Material implements Positionable, Serializable
     private transient int currnum;
     private File file;
     private int scale=5;
+    private PointStore ps;
     
     private static int numMat=0;
     
@@ -61,6 +62,65 @@ public class Material implements Positionable, Serializable
         return true;
     }
     
+    private void getPoints(Points<Boolean> points, float radiusSQ, Vector3f orig, Vector3f cp, List<Vector3f> tp)
+    {
+        Vector3f [] pts=Math3D.getSurroundingPointsPlusOwn(cp, ps.getDist());
+        
+        for(int i=0;i<pts.length;++i)
+        {
+            if( orig.distanceSquared(pts[i])<=radiusSQ && points.containsPoint(pts[i])==false )
+            {
+                points.addPoint(pts[i], true);
+                tp.add(pts[i]);
+                getPoints(points,radiusSQ,orig, pts[i], tp);
+            }
+        }
+    }
+    
+    public byte getDensity(Vector3f p)
+    {
+        if( ps!=null && Settings.view_dens_interpolate )
+        {
+            Vector3f np=ps.getNearesPoint(p);
+            
+            if( ps.isSet(np)==false)return 0;
+            float radius=ps.getDist()*Settings.view_dens_interpolation_radius;
+            List<Vector3f> tl=new LinkedList<Vector3f>();
+            getPoints(new Points<Boolean>(), radius*radius, p, np, tl);
+            
+            float color=0;
+            float cdiv=0;
+            
+            ListIterator<Vector3f> it=tl.listIterator();
+            
+            
+            while(it.hasNext())
+            {
+                Vector3f cp=it.next();
+                
+                float dist=p.distance(cp);
+                dist=((-1)/radius)*dist+1.f;
+                color+=(ps.getPoint(cp)*dist);
+                cdiv+=dist;
+            }
+            
+            if(cdiv!=0)
+            {
+                color/=cdiv;
+                if((byte)color==0)
+                    color=1.f;
+            }
+            
+            return (byte)color;
+        }
+        else if(ps!=null)
+        {
+            return ps.getPoint(p) ;
+        }
+        else
+            return 0;
+    }
+    
     public void calculateDensity(float density)
     {
         Vector3f center=node.getWorldBound().getCenter();    
@@ -73,6 +133,12 @@ public class Material implements Positionable, Serializable
         pointlist.add(center);
         points.addPoint(center, true);
         
+        Float minx=null, miny=null, minz=null;
+        Float maxx=null, maxy=null, maxz=null;
+        
+        MainForm.print("Suche Punkte...");
+        MainForm.setStatus("Suche Punkte...");
+        
         while(queue.size()!=0)
         {
             Vector3f p=queue.get(0);
@@ -81,16 +147,123 @@ public class Material implements Positionable, Serializable
             Vector3f [] pts=Math3D.getSurroundingPoints(p, density);
             for(int i=0;i<pts.length;++i)
             {
-                if( points.containsPoint(pts[i])==false && testPoint(p, pts[i]) )
+                Vector3f cp=pts[i];
+                if( points.containsPoint(cp)==false && testPoint(p, cp) )
                 {
-                    queue.add(pts[i]);
-                    pointlist.add(pts[i]);
-                    points.addPoint(p, true);
+                    queue.add(cp);
+                    pointlist.add(cp);
+                    points.addPoint(cp, true);
+                    
+                    if( minx==null || cp.x<minx)
+                        minx=cp.x;
+                    if( miny==null || cp.y<miny)
+                        miny=cp.y;
+                    if( minz==null || cp.z<minz)
+                        minz=cp.z;
+                    
+                    if( maxx==null || cp.x>maxx)
+                        maxx=cp.x;
+                    if( maxy==null || cp.y>maxy)
+                        maxy=cp.y;
+                    if( maxz==null || cp.z>maxz)
+                        maxz=cp.z;
                 }
             }
         }
         
-        System.out.println("Found "+pointlist.size()+" Points");
+        Vector3f max=new Vector3f(maxx, maxy, maxz);
+        Vector3f min=new Vector3f(minx, miny, minz);
+        
+        MainForm.print("Found "+pointlist.size()+" Points");
+        MainForm.print("Adding to PointStore...");
+        MainForm.setStatus("Berechne Werte für "+pointlist.size()+" Punkte...");
+        
+        ps=new PointStore(min, max, density);
+        
+        while(pointlist.size()!=0)
+        {
+            MainForm.print("Populating with random values...");
+            {
+                ListIterator<Vector3f> it=pointlist.listIterator();
+
+                while(it.hasNext())
+                {
+                    Vector3f pos=it.next();
+                    Vector3f []pts=Math3D.getSurroundingPoints(pos, density);
+                    int set=0;
+                    for(int i=0;i<pts.length;++i)
+                    {
+                        byte b;
+                        if( ps.isSet(pts[i]) )
+                        {
+                            ++set;
+                        }
+                    }
+                    if( set==0)
+                    {
+                        int rnd=(int)(Math.random()*100.f+0.5f);
+                        if( rnd<10)
+                        {
+                            ps.setPoint(pos, (byte)(Math.random()*255.f-128.f+0.5f));
+                            it.remove();
+                        }
+                    }
+                    else
+                    {
+                        int rnd=(int)(Math.random()*100.f+0.5f);
+                        if( rnd<1)
+                        {
+                            ps.setPoint(pos, (byte)(Math.random()*255.f-128.f+0.5f));
+                            it.remove();
+                        }
+                    }
+                }
+            }
+            
+            MainForm.print("Interpolating...");
+            while(pointlist.size()!=0)
+            {   
+                boolean found=false;
+                ListIterator<Vector3f> it=pointlist.listIterator();
+
+                while(it.hasNext())
+                {
+                    Vector3f p=it.next();
+
+                    Vector3f []pts=Math3D.getSurroundingPoints(p, density);
+                    int color=0;                
+                    int set=0;
+                    for(int i=0;i<pts.length;++i)
+                    {
+                        byte b;
+                        if( (b=ps.getPoint(pts[i]))!=0 )
+                        {
+                            color+=(b+128);
+                            ++set;
+                        }
+                    }
+                    
+                    if(set>=2)
+                    {
+                        color/=set;    
+                        ps.setPoint(p, (byte)(color-128));
+                        found=true;
+                        it.remove();
+                    }
+                }
+                
+                if( found==false )
+                    break;
+            }
+            
+            MainForm.print(pointlist.size()+" items left");
+        }
+        
+        /*Box b=new Box("Box",min, max);
+        renderer.addtoScene(b);*/
+        
+        MainForm.print("Points created... done.");  
+        MainForm.setStatus("");
     }
     
     public void setOpacity(int pc)

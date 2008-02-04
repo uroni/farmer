@@ -72,6 +72,7 @@ public class MyLight implements Positionable, Serializable
         ball.setLightCombineMode(LightState.OFF);
         
         this.setOpacity(opacity);
+        this.setScale(scale);
     }
     
     public Vector3f getPosition()

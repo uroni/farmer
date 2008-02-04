@@ -9,25 +9,56 @@ import com.jme.math.Vector3f;
 import com.jme.math.Quaternion;
 import java.awt.Point;
 import com.jme.renderer.Camera;
+import com.jme.scene.Node;
+import com.jme.scene.Spatial;
+import com.jme.scene.shape.*;
+import com.jme.math.Vector3f;
+import com.jme.renderer.ColorRGBA;
+import com.jme.scene.state.AlphaState;
+import com.jme.light.PointLight;
+import com.jme.scene.state.LightState;
+import com.jme.scene.shape.Sphere;
+import java.io.Serializable;
 
 /**
  *
  * @author urpc
  */
-public class CameraRotation implements CameraInterface
+public class CameraRotation extends CameraInterface
 {
     private Point last_mouse;
-    private boolean changed;
+    private boolean changed=true;
     private Vector3f centerrotation=new Vector3f(0,1,0);
     private Vector3f center=new Vector3f(0,0,0);
     private float distance;
-    private Camera cam;
+    private transient Camera cam;
+    private transient Sphere ball;
+    private transient Node node;
+    private transient Render3D renderer;
+    private int scale=1;
+    private int opacity=0;
     
-    public CameraRotation(Camera c)
+    public CameraRotation(Camera c, Render3D renderer)
+    {
+        distance=Settings.camera_initial_view_distance;
+        init(c,renderer);
+    }
+    
+    public void init(Camera c, Render3D renderer)
     {
         cam=c;
-        distance=Settings.camera_initial_view_distance;
         changed=true;
+        this.renderer=renderer;
+        
+        ball=new Sphere("CameraCenter-ball", 10,10,1.f);
+        ball.setLocalTranslation(center);
+        ball.setSolidColor(ColorRGBA.red);
+        ball.setLightCombineMode(LightState.OFF);
+        node=new Node();
+        node.attachChild(ball);
+        
+        setOpacity(opacity);
+        setScale(scale);
     }
     
     public void setMousePosition(Point p)
@@ -82,6 +113,11 @@ public class CameraRotation implements CameraInterface
         changed=true;
     }
     
+    public float getViewDistance()
+    {
+        return distance;
+    }
+    
     public void changeViewDistance(float chdist)
     {
         distance+=chdist;
@@ -89,4 +125,56 @@ public class CameraRotation implements CameraInterface
             distance=Settings.camera_min_view_distance;
         changed=true;
     }
+    
+    public void setCamera(Camera cam)
+    {
+        this.cam=cam;
+        changed=true;
+    }
+    
+    public void setPosition(Vector3f pos)
+    {
+        setCenter(pos);
+    }
+    
+    public Vector3f getPosition()
+    {
+        return center;
+    }
+    
+    public void setRotation(Vector3f rot)
+    {
+        
+    }
+    
+    public Vector3f getRotation()
+    {
+        return new Vector3f(0,0,0);
+    }
+    
+    public float getRotStep(){ return 0.f; }
+    public float getPosStep(){ return Settings.ctrl_camera_pos_step; }
+    
+    public String getName(){ return "Kameraziel"; }
+    
+    public void setOpacity(int pc)
+    {
+        opacity=pc;
+        if( pc<50 )
+        {
+            renderer.removeFromScene(node);
+        }
+        else
+        {
+            if( !renderer.isInScene(node))
+                renderer.addtoScene(node);
+            
+        }
+    }
+    public int getOpacity(){return opacity; }
+    
+    public int getReversed(){ return 1;}
+    
+    public int getScale(){ return (int)ball.getLocalScale().x; }
+    public void setScale(int s){ scale=s; ball.setLocalScale(s);}
 }

@@ -65,6 +65,9 @@ import com.jme.bounding.CollisionTreeManager;
 import com.jme.math.Ray;
 import com.jme.intersection.TrianglePickResults;
 import com.jme.image.Image;
+import com.jmex.awt.swingui.ImageGraphics;
+import com.jme.image.Texture;
+import java.util.*;
 
 /**
  *
@@ -96,6 +99,9 @@ public class Render3D extends JMECanvasImplementor {
     private boolean bCamChanged;
     private float CameraDistance;
     private Box box;
+    
+    private List<ImageTexture> updateTextures=new LinkedList<ImageTexture>();
+    private boolean imageTexturesDirty=true;
     
     public CameraInterface camera;
 
@@ -147,9 +153,6 @@ public class Render3D extends JMECanvasImplementor {
         /** Assign the camera to this renderer. */
         renderer.setCamera(cam);
         
-        camera=new CameraRotation(cam);
-        camera.update();
-        
         
         /** Set a black background. */
         renderer.setBackgroundColor(ColorRGBA.black.clone());
@@ -157,7 +160,31 @@ public class Render3D extends JMECanvasImplementor {
         /** Get a high resolution timer for FPS updates. */
         timer = Timer.getTimer();
 
-        newRootNode();
+        if( rootNode==null)
+        {
+            try
+            {
+                com.jme.util.resource.SimpleResourceLocator srl=new com.jme.util.resource.SimpleResourceLocator(this.getClass().getClassLoader().getResource("."));
+                com.jme.util.resource.ResourceLocatorTool.addResourceLocator(com.jme.util.resource.ResourceLocatorTool.TYPE_TEXTURE, srl);
+            }
+            catch(Exception e)
+            {
+                e.printStackTrace();
+            }
+            newRootNode();
+        }
+            
+        
+        if(camera==null)
+        {
+            camera=new CameraRotation(cam, this);
+            MainForm.getMainForm().getPositionControl().addPositionable(camera);
+            MainForm.getMainForm().updatePositionSelectBox();
+            MainForm.getMainForm().getSimulation().setCamera(camera);
+        }
+        else
+            camera.setCamera(cam);
+        camera.update();
         
         /*box=new Box("MyBox", new Vector3f(0,0,0), 5,5,5);
         box.setModelBound(new BoundingBox());
@@ -165,15 +192,9 @@ public class Render3D extends JMECanvasImplementor {
         
         rootNode.attachChild(box);*/
        
-        try
-        {
-            com.jme.util.resource.SimpleResourceLocator srl=new com.jme.util.resource.SimpleResourceLocator(this.getClass().getClassLoader().getResource("."));
-            com.jme.util.resource.ResourceLocatorTool.addResourceLocator(com.jme.util.resource.ResourceLocatorTool.TYPE_TEXTURE, srl);
-        }
-        catch(Exception e)
-        {
-            e.printStackTrace();
-        }
+        
+        
+        
         
         
         /*PointLight l=new PointLight();
@@ -196,6 +217,16 @@ public class Render3D extends JMECanvasImplementor {
     }
     
     public Box getBox(){ return box; }
+    
+    public void setCamera(CameraInterface ccam)
+    {
+        camera=ccam;
+    }
+    
+    public CameraInterface getCameraInterface()
+    {
+        return camera;
+    }
     
     public void initView()
     {
@@ -248,15 +279,31 @@ public class Render3D extends JMECanvasImplementor {
     
     public void doResize(int width, int height)
     {
-        this.width=width;
-        this.height=height;
-        if( setup)
-            resizeCanvas(width, height);
+        if( width!=this.width || height!=this.height)
+        {
+            this.width=width;
+            this.height=height;
+            if( setup)
+            {
+                resizeCanvas(width, height);
+                setup=false;
+            }
+        }
     }
 
     public void doRender() {
         if( !setup)
             return;
+        
+        ListIterator<ImageTexture> it=updateTextures.listIterator();
+        while(it.hasNext())
+        {
+            ImageTexture imgt=it.next();
+            imgt.ig.update(imgt.tex, imageTexturesDirty);
+        }
+        
+        if(imageTexturesDirty)
+            imageTexturesDirty=false;
         
         renderer.clearBuffers();
         //renderer.renderQueue();
@@ -478,7 +525,7 @@ public class Render3D extends JMECanvasImplementor {
                 {
                     if( exclude!=null && exclude.hasChild(trp.getPickData(i).getTargetMesh().getParentGeom()) )
                         continue;
-                    System.out.println(trp.getPickData(i).getTargetMesh().getParentGeom().getName() + " " + trp.getPickData(i).getDistance());
+                    //System.out.println(trp.getPickData(i).getTargetMesh().getParentGeom().getName() + " " + trp.getPickData(i).getDistance());
                     return true;
                 }
             }
@@ -512,4 +559,23 @@ public class Render3D extends JMECanvasImplementor {
         
         return false;
     }
+    
+    public void addUpdateTexture(ImageGraphics ig, Texture tex)
+    {
+        ImageTexture it=new ImageTexture();
+        it.ig=ig;
+        it.tex=tex;
+        updateTextures.add(it);
+    }
+    
+    public void setImageTexturesDirty(boolean b)
+    {
+        imageTexturesDirty=b;
+    }
+}
+
+class ImageTexture
+{
+    public ImageGraphics ig;
+    public Texture tex;
 }

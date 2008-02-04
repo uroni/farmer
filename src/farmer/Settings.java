@@ -38,4 +38,17 @@ public class Settings implements Serializable
     public static float ctrl_material_pos_step=0.2f;
     public static float ctrl_material_rot_step=0.6f;
     public static float ctrl_acceleration_per_sec=2.5f;
+    public static float ctrl_dv_pos_step=0.2f;
+    public static float ctrl_dv_rot_step=0.6f;
+    public static float view_dens_width=5.f;
+    public static float view_dens_height=5.f;
+    public static int view_dens_update_delay=500;
+    public static boolean view_dens_interpolate=false;
+    public static float view_dens_interpolation_radius=1.5f;
+    public static int view_dens_pixel_size=512;
+    public static float ctrl_default_pos_step=0.2f;
+    public static float ctrl_default_rot_step=0.6f;
+    public static float calc_water_density_distance_multi=3.f;
+    public static float ctrl_camera_pos_step=0.2f;
+    public static float ctrl_fpscamera_pos_step=0.2f;
 }
