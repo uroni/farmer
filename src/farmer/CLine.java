@@ -45,6 +45,7 @@ public class CLine
         points=nb;
         
         line.reconstruct(nb, null, null, null);
+        line.updateRenderState();
     }
     
     public Spatial getNode()

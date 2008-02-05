@@ -26,7 +26,8 @@ public class Simulation implements Serializable
     private transient MainForm form;
     public transient Object point_mutex;    
     private boolean stopped=false;
-    private transient int speed=0;
+    private transient float speed;
+    private transient long lastsimtime;
     
     public Simulation(Render3D renderer, MainForm form)
     {
@@ -112,6 +113,16 @@ public class Simulation implements Serializable
         return corns.size();
     }
     
+    public float getSpeed()
+    {
+        return speed;
+    }
+    
+    public void setSpeed(float f)
+    {
+        speed=f;
+    }
+    
     public Korn getCorn(int i)
     {
         return corns.listIterator(i).next();
@@ -141,6 +152,7 @@ public class Simulation implements Serializable
         {
             ListIterator<Solid> it=solids.listIterator();
             while(it.hasNext())
+     
             {
                 Solid s=it.next();
                 s.update();
@@ -240,13 +252,26 @@ public class Simulation implements Serializable
         return (byte)density;
     }
     
-    public void step(float time)
+    public void step()
     {
+        if( lastsimtime==0 )
+        {
+            lastsimtime=System.currentTimeMillis();
+            return;
+        }
+        
+        float timeleft=(float)(System.currentTimeMillis()-lastsimtime)*speed;
+        
+        if( timeleft==0)
+            return;
+        
         for(int i=0;i<this.getNumCorns();++i)
         {
             Korn k=this.getCorn(i);
-            k.step(time);
+            k.step(timeleft);
         }
+        
+        lastsimtime=System.currentTimeMillis();
     }
     
     public synchronized void setStopped(boolean b)

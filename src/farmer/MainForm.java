@@ -326,6 +326,11 @@ public class MainForm extends javax.swing.JFrame {
         jButton12.setIcon(new javax.swing.ImageIcon(getClass().getResource("/player_pause.png"))); // NOI18N
 
         jButton13.setIcon(new javax.swing.ImageIcon(getClass().getResource("/player_play.png"))); // NOI18N
+        jButton13.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton13ActionPerformed(evt);
+            }
+        });
 
         jButton14.setIcon(new javax.swing.ImageIcon(getClass().getResource("/player_rew.png"))); // NOI18N
 
@@ -1108,7 +1113,8 @@ public class MainForm extends javax.swing.JFrame {
         {
             MouseB1down=true;
             renderer.camera.setMousePosition(evt.getPoint());
-            timer.setDelay(Settings.sys_camera_update_ms);
+            if( sim.getSpeed()==0 )
+                timer.setDelay(Settings.sys_camera_update_ms);
         }
     }//GEN-LAST:event_MouseDown
 
@@ -1117,7 +1123,8 @@ public class MainForm extends javax.swing.JFrame {
         if( evt.getButton()==MouseEvent.BUTTON1)
         {
             MouseB1down=false;
-            timer.setDelay(Settings.sys_initial_update_ms);
+            if( sim.getSpeed()==0 )
+                timer.setDelay(Settings.sys_initial_update_ms);
         }
     }//GEN-LAST:event_MouseReleased
 
@@ -1569,6 +1576,12 @@ public class MainForm extends javax.swing.JFrame {
     private void formMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseClicked
         
     }//GEN-LAST:event_formMouseClicked
+
+    private void jButton13ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton13ActionPerformed
+        sim.setSpeed(1.f);
+        timer.setDelay(Settings.sys_update_simulation);
+        jLabel10.setText("1x");
+    }//GEN-LAST:event_jButton13ActionPerformed
     
     public void addPositionTimer(int action)
     {
@@ -1577,13 +1590,15 @@ public class MainForm extends javax.swing.JFrame {
         postimer.setDelay(Settings.ctrl_position_delay);
         posaction.setAction(action);
         postimer.start();
-        timer.setDelay(Settings.sys_position_update_ms);
+        if( sim.getSpeed()==0)
+            timer.setDelay(Settings.sys_position_update_ms);
     }
     
     public void removePositionTimer()
     {
         postimer.stop();
-        timer.setDelay(Settings.sys_initial_update_ms);
+        if( sim.getSpeed()==0)
+            timer.setDelay(Settings.sys_initial_update_ms);
     }
     
     /**
@@ -1619,11 +1634,13 @@ public class MainForm extends javax.swing.JFrame {
         
         Action engineUpdate = new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
-                if( MainForm.getMainForm().getSimulation().isStopped())return;
+                Simulation sim=MainForm.getMainForm().getSimulation();
+                if( sim.isStopped())return;
                 LWJGLCanvas jmeCanvas = ( (LWJGLCanvas) mainform.canvas3d );
                 try
                 {
-                    //jmeCanvas.paintGL();
+                    if( sim.getSpeed()!=0)
+                        sim.step();
                     mainform.canvas3d.repaint();
                 }
                 catch(java.lang.IllegalStateException ex)

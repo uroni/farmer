@@ -5,6 +5,7 @@
 
 package farmer;
 
+import com.jme.math.FastMath;
 import java.io.Serializable;
 
 //JME includes
@@ -28,6 +29,9 @@ public class Wurzel implements Positionable, Serializable{
     private transient Render3D renderer;
     private transient String name;
     private transient Korn korn;
+    private transient CLine line;
+    private transient Vector3f curr_position,curr_direction;
+    private transient Vector3f gravity;
     
     public Wurzel(String name, Render3D renderer, Korn k)
     {
@@ -43,6 +47,16 @@ public class Wurzel implements Positionable, Serializable{
         arrow=new Arrow("arrow", Settings.view_root_arrow_length, Settings.view_root_arrow_width);
         k.addNode(arrow);
         renderer.disableLightning(arrow);
+        
+        line=new CLine();
+        k.addNode(line.getNode());
+        
+        curr_position=position.clone();
+        curr_direction=new Vector3f(0,1,0);
+        
+        gravity=new Vector3f();
+        setRotation(rotation);
+        recalculateGravity();
     }
     
     public String getName()
@@ -68,13 +82,24 @@ public class Wurzel implements Positionable, Serializable{
     
     public void setRotation(Vector3f rot)
     {
-        Math3D.setRotation(arrow, rot);
         rotation=rot;
+        Math3D.setRotation(arrow, rotation);
+    }
+    
+    public void recalculateGravity()
+    {
+        Vector3f nv=new Vector3f(0,0,0);
+        Vector3f nvo=new Vector3f(0,0,0);
+        korn.getNode().worldToLocal(Settings.sim_root_gravity, gravity);
+        korn.getNode().worldToLocal(nv, nvo);
+        gravity.subtractLocal(nvo);
+        gravity.normalizeLocal();
+        gravity.multLocal(Settings.sim_root_gravity.length());
     }
     
     public Vector3f getRotation()
     {
-        return Math3D.toDegree(arrow.getLocalRotation());
+        return rotation;
     }
     
     public void setSpeed(float speed)
@@ -88,7 +113,7 @@ public class Wurzel implements Positionable, Serializable{
         {            
             arrow.setSolidColor(ColorRGBA.red);
             arrow.setLocalTranslation(position);
-            Math3D.setRotation(arrow, rotation);
+            setRotation(rotation);
             
             //korn.addNode(arrow);
             
@@ -124,5 +149,40 @@ public class Wurzel implements Positionable, Serializable{
     public void setScale(int s)
     {
         
+    }
+    
+    public void step(float time)
+    {
+        float max_step=time*0.0001f;
+        
+        Vector3f target=curr_position.clone();
+        
+        curr_direction.normalizeLocal();       
+        
+        float deg=curr_direction.angleBetween(gravity.normalize())*FastMath.RAD_TO_DEG;
+        curr_direction.multLocal(Settings.sim_root_gravity_influence);
+        
+        if(deg>90)
+            deg=90;
+        
+        if(deg<20)
+            deg-=1;
+        
+        float a=Settings.sim_root_gravity_max/(FastMath.exp(-1*Settings.sim_root_gravity_k*Settings.sim_root_gravity_min_deg));
+        float beug=Settings.sim_root_gravity_max-a*FastMath.exp(-1*Settings.sim_root_gravity_k*deg);
+        if( beug>0)
+        {
+            Vector3f tmpg=gravity.clone();
+            tmpg.multLocal(beug);
+            curr_direction.addLocal(tmpg);
+        }
+        
+        curr_direction.normalizeLocal();
+        curr_direction.multLocal(max_step);
+        
+        target.addLocal(curr_direction);       
+        
+        line.addPoint(target);
+        curr_position=target;
     }
 }

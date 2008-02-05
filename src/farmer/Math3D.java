@@ -18,6 +18,7 @@ public class Math3D
     public static float PI=FastMath.PI;
     public static float GRAD_PI=180.0f/PI;
     public static float BOG=PI/180.0f;
+    public static float e=2.71828183f;
     
     public static Vector3f getHorizontalAngle(Vector3f vec)
     {

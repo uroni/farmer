@@ -6,6 +6,7 @@
 package farmer;
 
 import java.io.Serializable;
+import com.jme.math.Vector3f;
 
 /**
  *
@@ -18,6 +19,7 @@ public class Settings implements Serializable
     public static int sys_initial_update_ms=100;    
     public static int sys_camera_update_ms=10;
     public static int sys_position_update_ms=10;
+    public static int sys_update_simulation=10;
     public static float input_mouse_rotation_scale=1.f;
     public static float input_mouse_fpscam_scale=0.01f;
     public static float input_mouse_wheel_unit=3.f;
@@ -51,4 +53,9 @@ public class Settings implements Serializable
     public static float calc_water_density_distance_multi=3.f;
     public static float ctrl_camera_pos_step=0.2f;
     public static float ctrl_fpscamera_pos_step=0.2f;
+    public static Vector3f sim_root_gravity=new Vector3f(0,1,0);
+    public static float sim_root_gravity_k=0.05f; //f(t)=max-a*e^(-k*t)
+    public static float sim_root_gravity_max=2.f;
+    public static float sim_root_gravity_min_deg=20.f;
+    public static float sim_root_gravity_influence=800.f; //Größer ==> weniger
 }

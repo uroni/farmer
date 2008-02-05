@@ -47,6 +47,11 @@ public class Korn implements Positionable, Serializable
         }
     }
     
+    public Node getNode()
+    {
+        return model;
+    }
+    
     public void init(Render3D renderer, boolean load)
     {
         curr_kornnum=++kornnum;
@@ -72,10 +77,20 @@ public class Korn implements Positionable, Serializable
         this.setOpacity(opacity);
     }
     
+    public void recalculateGravity()
+    {
+        for(int i=0;i<wurzeln.size();++i)
+        {
+            wurzeln.listIterator(i).next().recalculateGravity();
+        }
+    }
+    
     public void setPosition(Vector3f pos)
     {
         model.setLocalTranslation(pos);
         model.updateGeometricState(0.f, false);
+        model.updateWorldVectors();
+        recalculateGravity();
     }
     
     public Vector3f getPosition()
@@ -87,6 +102,8 @@ public class Korn implements Positionable, Serializable
     {
         Math3D.setRotation(model, rot);
         model.updateGeometricState(0.f, false);
+        model.updateWorldVectors();
+        recalculateGravity();
     }
     
     public Vector3f getRotation()
@@ -182,7 +199,14 @@ public class Korn implements Positionable, Serializable
     
     public void step(float time)
     {
+        ListIterator<Wurzel> it=wurzeln.listIterator();
         
+        while(it.hasNext())
+        {
+            Wurzel w=it.next();
+            
+            w.step(time);
+        }
     }
     
     public int getScale()
