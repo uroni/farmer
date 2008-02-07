@@ -322,8 +322,18 @@ public class MainForm extends javax.swing.JFrame {
         jPanel16.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         jButton11.setIcon(new javax.swing.ImageIcon(getClass().getResource("/player_fwd.png"))); // NOI18N
+        jButton11.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton11ActionPerformed(evt);
+            }
+        });
 
         jButton12.setIcon(new javax.swing.ImageIcon(getClass().getResource("/player_pause.png"))); // NOI18N
+        jButton12.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton12ActionPerformed(evt);
+            }
+        });
 
         jButton13.setIcon(new javax.swing.ImageIcon(getClass().getResource("/player_play.png"))); // NOI18N
         jButton13.addActionListener(new java.awt.event.ActionListener() {
@@ -333,12 +343,17 @@ public class MainForm extends javax.swing.JFrame {
         });
 
         jButton14.setIcon(new javax.swing.ImageIcon(getClass().getResource("/player_rew.png"))); // NOI18N
+        jButton14.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton14ActionPerformed(evt);
+            }
+        });
 
         jButton25.setIcon(new javax.swing.ImageIcon(getClass().getResource("/player_stop.png"))); // NOI18N
 
         jLabel9.setText("Simulationsgeschwindkeit:");
 
-        jLabel10.setText("0x");
+        jLabel10.setText("0.0x");
 
         javax.swing.GroupLayout jPanel16Layout = new javax.swing.GroupLayout(jPanel16);
         jPanel16.setLayout(jPanel16Layout);
@@ -359,7 +374,7 @@ public class MainForm extends javax.swing.JFrame {
                 .addComponent(jLabel9)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel10)
-                .addContainerGap(128, Short.MAX_VALUE))
+                .addContainerGap(118, Short.MAX_VALUE))
         );
         jPanel16Layout.setVerticalGroup(
             jPanel16Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -810,8 +825,7 @@ public class MainForm extends javax.swing.JFrame {
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addGap(78, 78, 78)
-                        .addComponent(jButton17)
-                        .addGap(11, 11, 11))
+                        .addComponent(jButton17))
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addGap(74, 74, 74)
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1186,7 +1200,7 @@ public class MainForm extends javax.swing.JFrame {
     public Korn addCorn(Korn k)
     {
         if( k==null )
-            curr_korn=new Korn(MainForm.getRenderer());
+            curr_korn=new Korn(MainForm.getRenderer(), sim);
         else
             curr_korn=k;
         
@@ -1580,8 +1594,34 @@ public class MainForm extends javax.swing.JFrame {
     private void jButton13ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton13ActionPerformed
         sim.setSpeed(1.f);
         timer.setDelay(Settings.sys_update_simulation);
-        jLabel10.setText("1x");
+        //jLabel10.setText("1x");
+        updateSpeed();
     }//GEN-LAST:event_jButton13ActionPerformed
+
+    public void updateSpeed()
+    {
+        String speed=""+sim.getSpeed();
+        speed=speed.substring(0, 3);
+        jLabel10.setText(speed+"x");
+    }
+    
+    private void jButton11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton11ActionPerformed
+        sim.setSpeed(sim.getSpeed()+0.5f);
+        timer.setDelay(Settings.sys_update_simulation);
+        updateSpeed();
+    }//GEN-LAST:event_jButton11ActionPerformed
+
+    private void jButton14ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton14ActionPerformed
+        sim.setSpeed(sim.getSpeed()-0.5f);  
+        timer.setDelay(Settings.sys_update_simulation);
+        updateSpeed();
+    }//GEN-LAST:event_jButton14ActionPerformed
+
+    private void jButton12ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton12ActionPerformed
+        sim.setSpeed(0.f);    
+        timer.setDelay(Settings.sys_initial_update_ms);
+        updateSpeed();
+    }//GEN-LAST:event_jButton12ActionPerformed
     
     public void addPositionTimer(int action)
     {

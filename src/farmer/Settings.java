@@ -27,7 +27,7 @@ public class Settings implements Serializable
     public static float camera_min_view_distance=10.f;
     public static float view_root_arrow_length=0.4f;
     public static float view_root_arrow_width=0.04f;
-    public static int sim_corn_init_root_count=3;
+    public static int sim_corn_init_root_count=1;
     public static float ctrl_corn_pos_step=0.1f;
     public static float ctrl_corn_rot_step=0.6f;
     public static float ctrl_root_pos_step=0.02f;
@@ -54,8 +54,17 @@ public class Settings implements Serializable
     public static float ctrl_camera_pos_step=0.2f;
     public static float ctrl_fpscamera_pos_step=0.2f;
     public static Vector3f sim_root_gravity=new Vector3f(0,1,0);
-    public static float sim_root_gravity_k=0.05f; //f(t)=max-a*e^(-k*t)
+    public static int sim_root_gravity_func=1; //0=(f(t)=max-a*e^(-k*t)) 1=max*(1/(1+exp((add-t)*k2))
+    public static float sim_root_gravity_k2=0.1f;
+    public static float sim_root_gravity_add=50.f;
+    public static float sim_root_gravity_k=0.05f; //
     public static float sim_root_gravity_max=2.f;
     public static float sim_root_gravity_min_deg=20.f;
-    public static float sim_root_gravity_influence=800.f; //Größer ==> weniger
+    public static float sim_root_gravity_influence1=800.f; //Größer ==> weniger
+    public static float sim_root_gravity_influence2=0.03125f; //Kleiner ==> weniger
+    public static float sim_collison_savety_distance=0.1f;
+    public static int sim_collison_straigt_time=1000;
+    public static int sim_collision_straigt_time_back=10000;
+    public static float sim_collision_straigt_mult=0.00001f;
+    public static float sim_collision_straigt_age_mult=0.1f;
 }

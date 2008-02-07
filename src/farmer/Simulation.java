@@ -28,6 +28,7 @@ public class Simulation implements Serializable
     private boolean stopped=false;
     private transient float speed;
     private transient long lastsimtime;
+    private transient float simulatedtime;
     
     public Simulation(Render3D renderer, MainForm form)
     {
@@ -45,7 +46,7 @@ public class Simulation implements Serializable
             while(it.hasNext())
             {
                 Korn k=it.next();
-                k.init(renderer, true);
+                k.init(renderer, true, this);
                 form.addCorn(k);
             }
         }
@@ -121,6 +122,7 @@ public class Simulation implements Serializable
     public void setSpeed(float f)
     {
         speed=f;
+        lastsimtime=0;
     }
     
     public Korn getCorn(int i)
@@ -252,6 +254,11 @@ public class Simulation implements Serializable
         return (byte)density;
     }
     
+    public float getSimulatedTime()
+    {
+        return simulatedtime;
+    }
+    
     public void step()
     {
         if( lastsimtime==0 )
@@ -264,6 +271,8 @@ public class Simulation implements Serializable
         
         if( timeleft==0)
             return;
+        
+        simulatedtime+=timeleft;
         
         for(int i=0;i<this.getNumCorns();++i)
         {

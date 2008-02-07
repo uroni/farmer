@@ -52,12 +52,12 @@ public class Solid implements Positionable, Serializable
     {
         if( pc==0 )
         {
-            renderer.removeFromScene(node);
+            renderer.removeFromSceneCol(node);
         }
         else
         {
-            if(renderer.isInScene(node)==false)
-                renderer.addtoScene(node);
+            if(renderer.isInSceneCol(node)==false)
+                renderer.addtoSceneCol(node);
             
             if( pc==100 )
             {

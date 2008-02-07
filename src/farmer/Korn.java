@@ -33,16 +33,17 @@ public class Korn implements Positionable, Serializable
     
     private static int kornnum=0;
     private transient int curr_kornnum;
+    private transient Simulation sim;
 
     
-    public Korn( Render3D renderer)
+    public Korn( Render3D renderer, Simulation sim)
     {
-        init(renderer, false);
+        init(renderer, false, sim);
         
         
         for(int i=0;i<Settings.sim_corn_init_root_count;++i)
         {
-            Wurzel w=new Wurzel("Wurzel "+(i+1), renderer, this);
+            Wurzel w=new Wurzel("Wurzel "+(i+1), renderer, this, sim);
             wurzeln.add(w);
         }
     }
@@ -52,10 +53,11 @@ public class Korn implements Positionable, Serializable
         return model;
     }
     
-    public void init(Render3D renderer, boolean load)
+    public void init(Render3D renderer, boolean load, Simulation sim)
     {
         curr_kornnum=++kornnum;
         this.renderer=renderer;
+        this.sim=sim;
         
         model=renderer.loadMdl("korn_uv3.3ds");
         
@@ -69,7 +71,7 @@ public class Korn implements Positionable, Serializable
             for(int i=0;i<wurzeln.size();++i)
             {
                 Wurzel w=wurzeln.listIterator(i).next();
-                w.init("Wurzel "+(i+1), renderer, this);
+                w.init("Wurzel "+(i+1), renderer, this, sim);
             }
         }
         

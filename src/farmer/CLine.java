@@ -48,6 +48,17 @@ public class CLine
         line.updateRenderState();
     }
     
+    public void updatePoint(Vector3f pos, int idx)
+    {
+        points.position(idx*3);
+        points.put(pos.x);
+        points.put(pos.y);
+        points.put(pos.z);
+        
+        line.reconstruct(points, null, null, null);
+        line.updateRenderState();
+    }
+    
     public Spatial getNode()
     {
         return line;

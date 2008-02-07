@@ -372,4 +372,16 @@ public class Math3D
         
         return ret;
     }
+    
+    public static Vector3f intersection(Vector3f start, Vector3f dir, Plane plane)
+    {
+        float t2=plane.getNormal().dot(dir);
+        
+        if(t2==0)
+            return null;
+        
+        float t= -(plane.getNormal().dot(start)+plane.getConstant())/t2;
+        Vector3f out=start.add(dir.mult(t));
+        return out;
+    }
 }

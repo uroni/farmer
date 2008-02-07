@@ -56,10 +56,10 @@ public class Material implements Positionable, Serializable
     
     private boolean testPoint(Vector3f orig, Vector3f point)
     {
-        boolean b=renderer.collides(orig, point, node, null);
-        if( b )
-           return false;
-        return true;
+        if( renderer.collides(orig, point, node, null, true,0)==null )
+            return true;
+        else
+            return false;
     }
     
     private void getPoints(Points<Boolean> points, float radiusSQ, Vector3f orig, Vector3f cp, List<Vector3f> tp)
