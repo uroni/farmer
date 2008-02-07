@@ -282,7 +282,7 @@ public class Wurzel implements Positionable, Serializable{
             ++t;
         }while(tri!=null && t<10);
         
-        if( intersection==true)
+        /*if( intersection==true)
         {
             straigt_timeleft=Settings.sim_collison_straigt_time;
         }
@@ -290,6 +290,8 @@ public class Wurzel implements Positionable, Serializable{
         if( straigt_timeleft>0)
         {
             straigt_timeleft-=time;
+            
+            Vector3f curr_direction_copy=curr_direction.clone();
             
             curr_direction.normalizeLocal();
             
@@ -300,6 +302,7 @@ public class Wurzel implements Positionable, Serializable{
             
             ArrayList<Vector3f> points=new ArrayList<Vector3f>();
             points.ensureCapacity(idx*-1);
+            points.add(rp.getPointPos(idx));
             
             for(int i=idx;i<-1;++i)
             {
@@ -316,21 +319,17 @@ public class Wurzel implements Positionable, Serializable{
                 if(fx>1.f)
                     fx=1.f;
                 
+                //float fx=(10000.f)/(age);
+                
                 Vector3f add=curr_direction.mult(fx*time*Settings.sim_collision_straigt_mult);
-                if( points.size()>0)
-                {
-                    add.addLocal(vec);
-                    add.normalizeLocal();
-                    add.multLocal(vec.length());
-                    
-                    Vector3f neu=points.get(points.size()-1).add(add);                    
-                    points.add(neu);
-                }
-                else
-                {
-                    points.add(curr);
-                }
-                    
+                
+                add.addLocal(vec);
+                add.normalizeLocal();
+                add.multLocal(vec.length());
+                
+                Vector3f neu=curr.add(add);                   
+                points.add(neu);
+                                    
             }
             
             ListIterator<Vector3f> it=points.listIterator();
@@ -340,11 +339,83 @@ public class Wurzel implements Positionable, Serializable{
                 ++idx;
             }
             
-            curr_position=points.listIterator(points.size()-1).next();
-            int ttime=straigt_timeleft;
-            straigt_timeleft=0;
-            step(time);
-            straigt_timeleft=ttime;
+            curr_position=rp.getPointPos(-1).add(curr_direction_copy);
+        }*/
+        
+        if(intersection)
+        {
+            int idx=-1;
+            float r;
+            while((r=rp.getAge(idx))<=Settings.sim_collision_straigt_time_back && r!=0)--idx;
+            ++idx;
+            
+            float dlength=curr_direction.length();
+            
+            ArrayList<Vector3f> points=new ArrayList<Vector3f>();
+            points.ensureCapacity(idx*-1);
+            points.add(rp.getPointPos(idx));
+            
+            float allpc=0.f;
+            
+            for(int i=idx+1;i<=-1;++i)
+            {
+                Vector3f prev=rp.getPointPos(i-1);
+                Vector3f curr=rp.getPointPos(i);
+                
+                float age=rp.getAge(i);
+                if(age==0)
+                    ++age;
+                
+                Vector3f vec=curr.subtract(prev);
+                
+                allpc+=vec.length()*(Settings.sim_collision_straigt_mult2/age)+Settings.sim_collision_straigt_add;                                    
+            }
+            
+            Vector3f start=rp.getPointPos(idx).clone();
+            for(int i=idx+1;i<=-1;++i)
+            {
+                Vector3f prev=rp.getPointPos(i-1);
+                Vector3f curr=rp.getPointPos(i);
+                
+                float age=rp.getAge(i);
+                if(age==0)
+                    ++age;
+                
+                Vector3f vec=curr.subtract(prev);
+                
+                float vlength=vec.length();
+                
+                float fx=vlength*(Settings.sim_collision_straigt_mult2/age)+Settings.sim_collision_straigt_add;                                    
+                Vector3f add_dir=curr_direction.normalize();
+                float adlength=(dlength/allpc)*fx;
+                add_dir.multLocal(adlength);
+                
+                vec.addLocal(add_dir);
+                vec.normalizeLocal().multLocal(vlength);
+                start.addLocal(vec);
+                points.add(start.clone());
+            }
+            
+            ListIterator<Vector3f> it=points.listIterator();
+            while(it.hasNext())
+            {
+                rp.setPoint(it.next(), idx);
+                ++idx;
+            }
+            
+            curr_position=rp.getPointPos(-1).clone();
+            Vector3f curr_direction_neu=rp.getPointPos(-1).subtract(rp.getPointPos(-2));
+            if( curr_direction_neu.normalize().angleBetween(curr_direction.normalize()) <=Settings.sim_collision_straigt_min_degree)
+            {
+                curr_position.addLocal(curr_direction.normalize().mult(dlength));
+                rp.addPoint(curr_position);
+            }
+            else
+            {
+                curr_direction=curr_direction_neu;
+            }           
+            
+            //step(time); --- too much CPU usage
         }
         else        
             rp.addPoint(curr_position);

@@ -64,7 +64,11 @@ public class Settings implements Serializable
     public static float sim_root_gravity_influence2=0.03125f; //Kleiner ==> weniger
     public static float sim_collison_savety_distance=0.1f;
     public static int sim_collison_straigt_time=1000;
-    public static int sim_collision_straigt_time_back=10000;
-    public static float sim_collision_straigt_mult=0.00001f;
-    public static float sim_collision_straigt_age_mult=0.1f;
+    public static int sim_collision_straigt_time_back=20000;
+    public static float sim_collision_straigt_mult=0.0001f;
+    public static float sim_collision_straigt_mult2=1.5f;
+    public static float sim_collision_straigt_age_mult=1.f;
+    public static int sim_collision_straigt_min_back=10;
+    public static float sim_collision_straigt_add=0.000001f;
+    public static float sim_collision_straigt_min_degree=0.1f;
 }
