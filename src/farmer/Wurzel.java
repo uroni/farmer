@@ -275,55 +275,68 @@ public class Wurzel implements Positionable, Serializable{
         Vector3f old_position=curr_position.clone();
         curr_position=target;
         
+        
+        {
+            float max_random=Settings.sim_root_density_probes_max_distance_mult*time;
+            Vector3f min_dens_vec=curr_position;
+            float min_dens=sim.getDensity(worldVector(curr_position), false);
+
+            if( min_dens!=0)
+            {
+
+                for(int i=0;i<Settings.sim_root_density_probes;++i)
+                {
+                    Vector3f curr=curr_position.clone();
+                    curr.x+=Math.random()*max_random-max_random/2.f;
+                    curr.y+=Math.random()*max_random-max_random/2.f;
+                    curr.z+=Math.random()*max_random-max_random/2.f;
+
+                    float dens=sim.getDensity(worldVector(curr), false);
+                    if( dens<min_dens)
+                    {
+                        min_dens=dens;
+                        min_dens_vec=curr;
+                    }
+                }
+
+                curr_position=min_dens_vec;
+                curr_direction=curr_position.subtract(old_position);
+            }
+        }
+        
         //intersection
         Vector3f []tri;
         boolean intersection=false;
-        
-        int t=0;
-        do
-        {
-            Vector3f curr_oldpos_world=worldVector(old_position);
-            Vector3f curr_position_world=worldVector(curr_position);
-            tri=renderer.collides(curr_oldpos_world, curr_position_world, null, null, false, Settings.sim_collison_savety_distance);
-            if( tri!=null)
+
+            int t=0;
+            do
             {
-                Vector3f curr_dir_world=curr_position_world.subtract(curr_oldpos_world);//worldDirection(curr_direction);
-                
-                if(t==1)
+                Vector3f curr_oldpos_world=worldVector(old_position);
+                Vector3f curr_position_world=worldVector(curr_position);
+                tri=renderer.collides(curr_oldpos_world, curr_position_world, null, null, false, Settings.sim_collison_savety_distance);
+                if( tri!=null)
                 {
-                    int bla=2;
-                    ++bla;
+                    Vector3f curr_dir_world=curr_position_world.subtract(curr_oldpos_world);//worldDirection(curr_direction);
+
+                    Plane plane=new Plane();
+                    plane.setPlanePoints(tri[0], tri[1], tri[2]);
+
+                    Vector3f cp1=tri[3];
+
+                    Vector3f cp2=curr_oldpos_world.add(plane.getNormal().mult(-1*plane.pseudoDistance(curr_oldpos_world)) );
+
+                    cp1.subtractLocal(cp2);
+
+                    curr_direction=localDirection(cp1);
+                    curr_direction.normalizeLocal();
+                    curr_direction.multLocal(max_step);
+
+                    curr_position=old_position.clone();
+                    curr_position.addLocal(curr_direction);
+                    intersection=true;
                 }
+            }while(tri!=null && t<3);
 
-                Plane plane=new Plane();
-                plane.setPlanePoints(tri[0], tri[1], tri[2]);
-                
-                Vector3f cp1=tri[3];
-
-                Vector3f cp2=curr_oldpos_world.add(plane.getNormal().mult(-1*plane.pseudoDistance(curr_oldpos_world)) );
-
-                cp1.subtractLocal(cp2);
-
-                curr_direction=localDirection(cp1);
-                curr_direction.normalizeLocal();
-                curr_direction.multLocal(max_step);
-                
-                curr_position=old_position.clone();
-                curr_position.addLocal(curr_direction);
-                intersection=true;
-            }
-            ++t;
-        }while(tri!=null && t<10);
-        
-        if( !intersection) // Density
-        {
-            float max_random=Settings.sim_root_density_probes_max_distance_mult*curr_direction.length();
-            
-            Vector3f min_dens_vec=curr_position;
-            float min_dens=sim.getDensity(curr_position);
-            
-            for(int i=;i<Settings.sim_root_density_probes)
-        }
         
         if( intersection && Settings.sim_root_collision_quirk )
         {
@@ -346,6 +359,8 @@ public class Wurzel implements Positionable, Serializable{
                 last_intersection_direction=curr_direction.clone().normalize();
             }
         }
+        
+        
         
         /*if( intersection==true)
         {

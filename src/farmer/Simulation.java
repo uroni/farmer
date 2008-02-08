@@ -233,7 +233,7 @@ public class Simulation implements Serializable
         t1.start();
     }
     
-    public float getDensity(Vector3f p)
+    public float getDensity(Vector3f p, boolean dv)
     {
         int count=0;
         float density=0;
@@ -241,7 +241,7 @@ public class Simulation implements Serializable
         while(it.hasNext())
         {
             Material m=it.next();
-            density+=m.getDensity(p)+128;
+            density+=m.getDensity(p, dv)+128;
             ++count;
         }
         

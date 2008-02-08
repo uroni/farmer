@@ -93,5 +93,5 @@ public class Settings implements Serializable
     public static int sim_root_stage6_barrier=100000000;
     public static int view_root_display_mode=2; //1=line 2=pipe 3=both
     public static int sim_root_density_probes=10;
-    public static float sim_root_density_probes_max_distance_mult=0.1f;
+    public static float sim_root_density_probes_max_distance_mult=0.0000005f;
 }

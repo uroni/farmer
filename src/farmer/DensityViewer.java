@@ -233,7 +233,7 @@ public class DensityViewer implements Positionable, Serializable
                 target.addLocal(d1.mult(y*step2));
                 target.addLocal(d2.mult(x*step1));
                 
-                byte d=(byte)sim.getDensity(target);
+                byte d=(byte)sim.getDensity(target, true);
                 if(d!=0)
                     //ig.setColor(new Color((int)(m*(long)d+c),true));
                     ig.setColor(new Color((int)(d+128),(int)(d+128),(int)(d+128)));

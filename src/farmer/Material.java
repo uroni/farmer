@@ -77,13 +77,13 @@ public class Material implements Positionable, Serializable
         }
     }
     
-    public float getDensity(Vector3f p)
+    public float getDensity(Vector3f p, boolean dv)
     {
-        if( ps!=null && Settings.view_dens_interpolate )
+        if( ps!=null && (Settings.view_dens_interpolate||!dv) )
         {
             Vector3f np=ps.getNearesPoint(p);
             
-            if( ps.isSet(np)==false)return 0.f;
+            if( dv && ps.isSet(np)==false)return 0.f;
             float radius=ps.getDist()*Settings.view_dens_interpolation_radius;
             List<Vector3f> tl=new LinkedList<Vector3f>();
             getPoints(new Points<Boolean>(), radius*radius, p, np, tl);
