@@ -195,9 +195,59 @@ public class Render3D extends JMECanvasImplementor {
         
         rootNode.attachChild(box);*/
        
+        /*RPoint p1=new RPoint();
+        p1.pos=new Vector3f(0,0,0);
+        p1.korn=null;
         
+        RPoint p2=new RPoint();
+        p2.pos=new Vector3f(-15,-1,-5);
+        p2.korn=null;
         
+        RPoint p3=new RPoint();
+        p3.pos=new Vector3f(15,-2,0);
+        p3.korn=null;
         
+        RPoint p4=new RPoint();
+        p4.pos=new Vector3f(25,-10,0);
+        p4.korn=null;
+        
+        RPoint p5=new RPoint();
+        p5.pos=new Vector3f(35,-2,0);
+        p5.korn=null;
+        
+        Segment s=new Segment(this);
+        s.add(p2);
+        s.add(p1);
+        s.add(p3);
+        s.add(p4);
+        s.add(p5);
+        s.update();*/
+        
+         
+        /*Node n1=new Node("test1");
+        Node n2=new Node("test2");
+        
+        Vector3f [] pts=Math3D.getCircleSegments(new Vector3f(0,0,0), new Vector3f(90,0,0), 5.f);
+        for(int i=0;i<pts.length;++i)
+        {
+            Sphere ball1=new Sphere("ball", 10, 10, 0.1f);
+            ball1.setLocalTranslation(pts[i]);
+            ball1.setSolidColor(ColorRGBA.pink);
+            n1.attachChild(ball1);
+            
+            Sphere ball2=new Sphere("ball", 10, 10, 0.1f);
+            ball2.setLocalTranslation(pts[i]);
+            ball2.setSolidColor(ColorRGBA.pink);
+            n2.attachChild(ball2);
+        }
+        
+        n2.setLocalTranslation(new Vector3f(15,5,0));
+        
+        n1.lookAt(n2.getLocalTranslation(), new Vector3f(0,1,0));
+        n2.lookAt(n1.getLocalTranslation(), new Vector3f(0,1,0));
+        
+        this.addtoScene(n1);
+        this.addtoScene(n2);*/
         
         
         /*PointLight l=new PointLight();

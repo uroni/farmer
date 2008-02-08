@@ -9,6 +9,8 @@ import com.jme.math.Vector3f;
 import com.jme.math.Matrix4f;
 import com.jme.math.*;
 import com.jme.scene.Spatial;
+import java.util.ArrayList;
+import java.util.List;
 /**
  *
  * @author urpc
@@ -160,6 +162,39 @@ public class Math3D
             }
             else
                     return new Vector3f(0,0,0);
+    }
+    
+    public static Vector3f getRotationToTarget3(Vector3f position, Vector3f target)
+    {
+        Vector3f up=new Vector3f(0,1,0);
+        Quaternion q=new Quaternion();
+        q.lookAt(target.subtract(position), up);
+        float [] angles=new float[3];
+        q.toAngles(angles);
+        up.x=angles[0]*FastMath.RAD_TO_DEG;
+        up.y=angles[1]*FastMath.RAD_TO_DEG;
+        up.z=angles[2]*FastMath.RAD_TO_DEG;
+        return up;
+    }
+    
+    public static Vector3f getRotationToTarget4(Vector3f position, Vector3f target)
+    {
+        Vector3f direction=position.subtract( target ).normalizeLocal();
+        Vector3f up=new Vector3f(0,1,0);
+        Vector3f left=new Vector3f();
+        left.set( up ).crossLocal( direction ).normalizeLocal();
+        if( left.equals( Vector3f.ZERO ) )
+            if( direction.x != 0 )
+                left.set( direction.y, -direction.x, 0f );
+            else
+                left.set( 0f, direction.z, -direction.y );
+        up.set( direction ).crossLocal( left ).normalizeLocal();
+        
+        left.x*=FastMath.RAD_TO_DEG;
+        left.y*=FastMath.RAD_TO_DEG;
+        left.z*=FastMath.RAD_TO_DEG;
+        
+        return left;        
     }
     
     public static Vector3f getTarget(Vector3f pos,Vector3f rot,float distance)
@@ -373,6 +408,33 @@ public class Math3D
         return ret;
     }
     
+    private static Vector3f []circle_points;
+    
+    public static Vector3f[] getCircleSegments(Vector3f pos, Vector3f rot, float r)
+    {
+        if( circle_points==null || circle_points.length!=Settings.sim_root_circle_segments)
+        {
+            circle_points=new Vector3f[Settings.sim_root_circle_segments];
+            
+            float astep=FastMath.TWO_PI/circle_points.length;
+            for(int i=0;i<circle_points.length;++i)
+            {
+                float x=FastMath.sin(i*astep);
+                float z=FastMath.cos(i*astep);
+                circle_points[i]=new Vector3f(x,0,z);
+            }
+        }
+        
+        Vector3f []ret=new Vector3f[circle_points.length];
+        
+        for(int i=0;i<circle_points.length;++i)
+        {
+            ret[i]=transformVec(circle_points[i], rot, pos, new Vector3f(r,r,r));
+        }
+        
+        return ret;
+    }
+    
     public static Vector3f intersection(Vector3f start, Vector3f dir, Plane plane)
     {
         float t2=plane.getNormal().dot(dir);
@@ -383,5 +445,14 @@ public class Math3D
         float t= -(plane.getNormal().dot(start)+plane.getConstant())/t2;
         Vector3f out=start.add(dir.mult(t));
         return out;
+    }
+    
+    public static Vector3f transformVec(Vector3f in, Vector3f rotation, Vector3f translation, Vector3f scale)
+    {
+        Quaternion q=new Quaternion();
+        q.fromAngles(rotation.x*FastMath.DEG_TO_RAD, rotation.y*FastMath.DEG_TO_RAD, rotation.z*FastMath.DEG_TO_RAD);
+        Vector3f ret=q.mult(in.mult( scale ) );
+        ret.addLocal( translation);
+        return ret;
     }
 }

@@ -71,4 +71,27 @@ public class Settings implements Serializable
     public static int sim_collision_straigt_min_back=10;
     public static float sim_collision_straigt_add=0.000001f;
     public static float sim_collision_straigt_min_degree=0.1f;
+    public static float sim_collision_straigt_max=0.00001f;
+    public static int sim_root_circle_segments=8;
+    public static float view_root_segment_size=2.f;
+    public static boolean sim_root_collision_quirk=true;
+    public static float view_root_ambient_pc=0.5f;
+    public static float view_root_detail=0.1f; //Smaller=>more
+    public static float sim_root_thikness=0.004f;
+    public static float sim_root_pointness=0.01f; 
+    public static float sim_root_stage1_updatetime=0.f;
+    public static float sim_root_stage2_updatetime=100.f;
+    public static float sim_root_stage3_updatetime=1000.f;
+    public static float sim_root_stage4_updatetime=10000.f;
+    public static float sim_root_stage5_updatetime=100000.f;
+    public static float sim_root_stage6_updatetime=1000000.f;
+    public static int sim_root_stage1_barrier=1000;
+    public static int sim_root_stage2_barrier=10000;
+    public static int sim_root_stage3_barrier=100000;
+    public static int sim_root_stage4_barrier=1000000;
+    public static int sim_root_stage5_barrier=10000000;
+    public static int sim_root_stage6_barrier=100000000;
+    public static int view_root_display_mode=2; //1=line 2=pipe 3=both
+    public static int sim_root_density_probes=10;
+    public static float sim_root_density_probes_max_distance_mult=0.1f;
 }

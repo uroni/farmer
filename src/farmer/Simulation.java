@@ -233,10 +233,10 @@ public class Simulation implements Serializable
         t1.start();
     }
     
-    public byte getDensity(Vector3f p)
+    public float getDensity(Vector3f p)
     {
         int count=0;
-        int density=0;
+        float density=0;
         ListIterator<Material> it=materials.listIterator();
         while(it.hasNext())
         {
@@ -247,11 +247,11 @@ public class Simulation implements Serializable
         
         if(count!=0)
         {
-            density/=count;
-            density-=128;
+            density/=(float)count;
+            density-=128.f;
         }
         
-        return (byte)density;
+        return density;
     }
     
     public float getSimulatedTime()

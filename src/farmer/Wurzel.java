@@ -38,9 +38,12 @@ public class Wurzel implements Positionable, Serializable{
     private transient Korn korn;
     private transient RootPoints rp;
     private transient Vector3f curr_position,curr_direction;
+    private transient Vector3f last_intersection_direction;
+    private transient float last_intersection_direction_age;
     private transient Vector3f gravity;
     private transient Simulation sim;
     private transient int straigt_timeleft;
+    private transient  Sphere []circle_nodes;
     
     public Wurzel(String name, Render3D renderer, Korn k, Simulation sim)
     {
@@ -58,7 +61,7 @@ public class Wurzel implements Positionable, Serializable{
         k.addNode(arrow);
         renderer.disableLightning(arrow);
         
-        rp=new RootPoints(sim);
+        rp=new RootPoints(sim, renderer, korn);
         k.addNode(rp.getNode());
         
         curr_position=position.clone();
@@ -67,6 +70,8 @@ public class Wurzel implements Positionable, Serializable{
         gravity=new Vector3f();
         setRotation(rotation);
         recalculateGravity();
+        //updateCircle();
+        last_intersection_direction_age=0;
     }
     
     public String getName()
@@ -88,12 +93,40 @@ public class Wurzel implements Positionable, Serializable{
     {
         arrow.setLocalTranslation(pos);
         position=pos;
+        //updateCircle();
     }
     
     public void setRotation(Vector3f rot)
     {
         rotation=rot;
         Math3D.setRotation(arrow, rotation);
+        //updateCircle();
+    }
+    
+    public void updateCircle()
+    {
+        Vector3f rot=getRotation();
+        Vector3f target=Math3D.getTarget(position, rot, 1.f);
+        rot=Math3D.getRotationToTarget2(getPosition(), target);
+        Vector3f []circle=Math3D.getCircleSegments(arrow.getLocalTranslation(), rot, 10.f);
+        if( circle_nodes==null || circle_nodes.length!=circle.length)
+            circle_nodes=new Sphere[circle.length];
+        
+        for(int i=0;i<circle.length;++i)
+        {
+            if( circle_nodes[i]==null)
+            {
+                circle_nodes[i]=new Sphere("circle", 10,10,0.5f);
+                circle_nodes[i].setSolidColor(ColorRGBA.blue);
+                korn.addNode(circle_nodes[i]);
+            }
+            circle_nodes[i].setLocalTranslation(circle[i]); 
+        }
+    }
+    
+    public void updatePositions()
+    {
+        rp.updateAll();
     }
     
     public void recalculateGravity()
@@ -282,6 +315,38 @@ public class Wurzel implements Positionable, Serializable{
             ++t;
         }while(tri!=null && t<10);
         
+        if( !intersection) // Density
+        {
+            float max_random=Settings.sim_root_density_probes_max_distance_mult*curr_direction.length();
+            
+            Vector3f min_dens_vec=curr_position;
+            float min_dens=sim.getDensity(curr_position);
+            
+            for(int i=;i<Settings.sim_root_density_probes)
+        }
+        
+        if( intersection && Settings.sim_root_collision_quirk )
+        {
+            boolean set=false;
+            if( last_intersection_direction_age!=0 && sim.getSimulatedTime()-last_intersection_direction_age<Settings.sim_collision_straigt_time_back)
+            {
+                if( last_intersection_direction.angleBetween(curr_direction.normalize())*FastMath.RAD_TO_DEG>90)
+                {
+                    float dlength=curr_direction.length();
+                    curr_direction=last_intersection_direction.clone();
+                    curr_direction.normalizeLocal();
+                    curr_direction.multLocal(dlength);
+                    last_intersection_direction_age=sim.getSimulatedTime();
+                    set=true;
+                }
+            }
+            if(set==false)
+            {
+                last_intersection_direction_age=sim.getSimulatedTime();
+                last_intersection_direction=curr_direction.clone().normalize();
+            }
+        }
+        
         /*if( intersection==true)
         {
             straigt_timeleft=Settings.sim_collison_straigt_time;
@@ -368,7 +433,10 @@ public class Wurzel implements Positionable, Serializable{
                 
                 Vector3f vec=curr.subtract(prev);
                 
-                allpc+=vec.length()*(Settings.sim_collision_straigt_mult2/age)+Settings.sim_collision_straigt_add;                                    
+                float fx=vec.length()*(Settings.sim_collision_straigt_mult2/age)+Settings.sim_collision_straigt_add;                                    
+                if(fx>Settings.sim_collision_straigt_max)
+                    fx=Settings.sim_collision_straigt_max;
+                allpc+=fx;
             }
             
             Vector3f start=rp.getPointPos(idx).clone();
@@ -386,6 +454,9 @@ public class Wurzel implements Positionable, Serializable{
                 float vlength=vec.length();
                 
                 float fx=vlength*(Settings.sim_collision_straigt_mult2/age)+Settings.sim_collision_straigt_add;                                    
+                if(fx>Settings.sim_collision_straigt_max)
+                    fx=Settings.sim_collision_straigt_max;
+                
                 Vector3f add_dir=curr_direction.normalize();
                 float adlength=(dlength/allpc)*fx;
                 add_dir.multLocal(adlength);
@@ -414,8 +485,6 @@ public class Wurzel implements Positionable, Serializable{
             {
                 curr_direction=curr_direction_neu;
             }           
-            
-            //step(time); --- too much CPU usage
         }
         else        
             rp.addPoint(curr_position);

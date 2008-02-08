@@ -93,6 +93,7 @@ public class Korn implements Positionable, Serializable
         model.updateGeometricState(0.f, false);
         model.updateWorldVectors();
         recalculateGravity();
+        updatePositions();
     }
     
     public Vector3f getPosition()
@@ -106,6 +107,15 @@ public class Korn implements Positionable, Serializable
         model.updateGeometricState(0.f, false);
         model.updateWorldVectors();
         recalculateGravity();
+        updatePositions();
+    }
+    
+    public void updatePositions()
+    {
+        for(int i=0;i<wurzeln.size();++i)
+        {
+            wurzeln.get(i).updatePositions();
+        }
     }
     
     public Vector3f getRotation()
@@ -219,6 +229,7 @@ public class Korn implements Positionable, Serializable
     {
         scale=s;
         model.setLocalScale(s);
+        updatePositions();
     }
     
     
