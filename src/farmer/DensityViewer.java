@@ -40,14 +40,16 @@ public class DensityViewer implements Positionable, Serializable
     private transient ImageGraphics ig;
     private transient Texture tex;
     private transient Timer timer;
+    private boolean water;
     
     private transient Sphere []balls=new Sphere[3];
     
     private static int numDV=0;
     
     
-    public DensityViewer(Render3D renderer, Simulation sim)
+    public DensityViewer(Render3D renderer, Simulation sim, boolean water)
     {
+        this.water=water;
         init(renderer, sim);
     }
     
@@ -57,7 +59,6 @@ public class DensityViewer implements Positionable, Serializable
         currnum=++numDV;
         this.renderer=renderer;
         quad=new Quad("Quad "+currnum, Settings.view_dens_width, Settings.view_dens_height);
-        setOpacity(opacity);
         ig=ImageGraphics.createInstance(Settings.view_dens_pixel_size, Settings.view_dens_pixel_size, 0);
         tex=new Texture();
         tex.setMipmapState(Texture.MM_NONE);
@@ -92,9 +93,9 @@ public class DensityViewer implements Positionable, Serializable
         node.attachChild(balls[1]);
         node.attachChild(balls[2]);
         
-        renderer.addUpdateTexture(ig, tex);
-        
         node.updateRenderState();
+        
+        setOpacity(opacity);
         
         final DensityViewer dv=this;
         
@@ -116,12 +117,16 @@ public class DensityViewer implements Positionable, Serializable
     {
         if( pc==0 )
         {
+            renderer.removeUpdateTexture(ig);
             renderer.removeFromScene(node);
         }
         else
         {
             if(renderer.isInScene(node)==false)
-                renderer.addtoScene(node);       
+                renderer.addtoScene(node);
+            
+            renderer.removeUpdateTexture(ig);
+            renderer.addUpdateTexture(ig, tex);
         }
         
         opacity=pc;
@@ -137,7 +142,10 @@ public class DensityViewer implements Positionable, Serializable
     
     public String getName()
     {
-        return "Dichtemesser "+currnum;
+        if( water)
+            return "Wassermesser "+currnum;
+        else
+            return "Dichtemesser "+currnum;
     }    
     
     public float getRotStep(){ return Settings.ctrl_dv_rot_step; }
@@ -232,13 +240,24 @@ public class DensityViewer implements Positionable, Serializable
                 Vector3f target=sv.clone();
                 target.addLocal(d1.mult(y*step2));
                 target.addLocal(d2.mult(x*step1));
-                
-                byte d=(byte)sim.getDensity(target, true);
-                if(d!=0)
-                    //ig.setColor(new Color((int)(m*(long)d+c),true));
-                    ig.setColor(new Color((int)(d+128),(int)(d+128),(int)(d+128)));
-                else 
-                    ig.setColor(Color.green);
+                        
+                if( !water)
+                {
+                    byte d=(byte)sim.getDensity(target, true);
+                    if(d!=0)
+                        //ig.setColor(new Color((int)(m*(long)d+c),true));
+                        ig.setColor(new Color((int)(d+128),(int)(d+128),(int)(d+128)));
+                    else 
+                        ig.setColor(Color.green);
+                }
+                else
+                {
+                    byte b=(byte)(sim.getWaterAmount(target)-128);
+                    if( b!=0 )
+                        ig.setColor(new Color(255-(b+128),255-(b+128),255,255));
+                    else
+                        ig.setColor(Color.yellow);
+                }
                 
                 //ig.setColor(new Color((int)(d+128), (int)(d+128),(int)(d+128)));
                 ig.fillRect(x, y, 1, 1);

@@ -29,11 +29,12 @@ public class Korn implements Positionable, Serializable
     private Vector3f position=new Vector3f(0,0,0);
     private Vector3f rotation=new Vector3f(0,0,0);;
     private int opacity=100;
-    private int scale=5;
+    private int scale=3;
     
     private static int kornnum=0;
     private transient int curr_kornnum;
     private transient Simulation sim;
+    private transient int curr_wurzelnum=0;
 
     
     public Korn( Render3D renderer, Simulation sim)
@@ -43,7 +44,7 @@ public class Korn implements Positionable, Serializable
         
         for(int i=0;i<Settings.sim_corn_init_root_count;++i)
         {
-            Wurzel w=new Wurzel("Wurzel "+(i+1), renderer, this, sim);
+            Wurzel w=new Wurzel("Korn "+curr_kornnum+" Wurzel "+(i+1), renderer, this, sim, false);
             wurzeln.add(w);
         }
     }
@@ -52,6 +53,8 @@ public class Korn implements Positionable, Serializable
     {
         return model;
     }
+    
+    
     
     public void init(Render3D renderer, boolean load, Simulation sim)
     {
@@ -71,12 +74,27 @@ public class Korn implements Positionable, Serializable
             for(int i=0;i<wurzeln.size();++i)
             {
                 Wurzel w=wurzeln.listIterator(i).next();
-                w.init("Wurzel "+(i+1), renderer, this, sim);
+                w.init("Korn "+curr_kornnum+" Wurzel "+(i+1), renderer, this, sim, false);
             }
         }
         
         renderer.addtoScene(model);
         this.setOpacity(opacity);
+        setScale(scale);
+    }
+    
+    public void addWurzel(Vector3f pos, Vector3f dir)
+    {
+        ++curr_wurzelnum;
+        Wurzel w=new Wurzel("Korn "+curr_kornnum+" Wurzel "+(wurzeln.size()+curr_wurzelnum),  renderer, this, sim, true);
+        w.setCurrDirection(dir);
+        w.setCurrPosition(pos);
+        /*w.setPosition(pos);
+        Vector3f rot=Math3D.getRotationToTarget(pos, pos.add(dir));
+        rot.x+=90;
+        w.setRotation(rot);*/
+        
+        wurzeln.add(w);
     }
     
     public void recalculateGravity()
@@ -172,6 +190,11 @@ public class Korn implements Positionable, Serializable
         model.detachChild(node);
     }
     
+    public boolean isInScene(Spatial node)
+    {
+        return model.hasChild(node);
+    }
+    
     public void update()
     {
         position=model.getLocalTranslation();
@@ -217,7 +240,9 @@ public class Korn implements Positionable, Serializable
         {
             Wurzel w=it.next();
             
-            w.step(time);
+            boolean b=w.step(time);
+            if(!b)
+                break;
         }
     }
     

@@ -5,8 +5,10 @@
 
 package farmer;
 
+import com.jme.bounding.BoundingBox;
 import com.jme.math.FastMath;
 import com.jme.math.LineSegment;
+import com.jme.math.Plane;
 import com.jme.math.Ray;
 import com.jme.math.Vector3f;
 import com.jme.renderer.ColorRGBA;
@@ -37,17 +39,21 @@ public class Segment
     private boolean inscene=false;
     private boolean use_detail;
     private Simulation simulation;
+    private boolean collidable;
+    private Segment previous;
+    private Vector3f last_rotation=new Vector3f(0,0,0);
     
-    public Segment(Render3D renderer, boolean use_detail, Simulation sim)
+    public Segment(Render3D renderer, boolean use_detail, Simulation sim, Segment previous)
     {
         
-        init(renderer, use_detail, sim);
+        init(renderer, use_detail, sim, previous);
     }
     
-    public void init(Render3D renderer, boolean use_detail, Simulation sim)
+    public void init(Render3D renderer, boolean use_detail, Simulation sim, Segment previous)
     {
         points=new LinkedList<RPoint>();
         this.renderer=renderer;
+        this.previous=previous;
         trimesh=new TriMesh("test");
         this.use_detail=use_detail;
         simulation=sim;
@@ -126,13 +132,24 @@ public class Segment
         renderer.addtoScene(ball);
     }
     
-    private int addPoints(int idx, RPoint curr, RPoint prev, RPoint next, float[] vertices, float []normals)
+    private int addPoints(int idx, RPoint curr, RPoint prev, RPoint next, float[] vertices, float []normals, boolean first)
     {
         Vector3f rot;
         if(next!=null)
             rot=Math3D.getRotationToTarget(prev.pos, next.pos);
         else
-            rot=Math3D.getRotationToTarget(prev.pos, curr.pos);
+        {
+            if( first && previous!=null)
+            {
+                rot=previous.getLastRotation().clone();
+            }
+            else
+            {
+                rot=Math3D.getRotationToTarget(prev.pos, curr.pos);
+                if(!first)
+                    last_rotation=rot.clone();
+            }                
+        }
         rot.x+=90;
         Vector3f [] pts=Math3D.getCircleSegments(curr.pos, rot, calculateRadius(curr));
         Node node=null;
@@ -248,18 +265,20 @@ public class Segment
         int t12=start_t1+Settings.sim_root_circle_segments/2;
         int t13=t2start+Settings.sim_root_circle_segments/2;
         
-        int t21=start_t1;
+        /*int t21=start_t1;
         int t22=t2start;
-        int t23=t2start+Settings.sim_root_circle_segments/2;
+        int t23=t2start+Settings.sim_root_circle_segments/2;*/
         
         Vector3f vec=getVec(pidx1, vertices);
         Vector3f direction=getVec(pidx2, vertices).subtractLocal(vec);
        
         Ray r=new Ray(vec, direction.normalizeLocal());
         
+        Plane plane=new Plane();
+        plane.setPlanePoints(getVec(t11,vertices), getVec(t12,vertices), getVec(t13,vertices));
         int dir;
-        if( r.intersect(getVec(t11,vertices), getVec(t12,vertices), getVec(t13,vertices))
-                ||r.intersect(getVec(t21,vertices), getVec(t22,vertices), getVec(t23,vertices)) )
+       if( plane.whichSide(getVec(pidx1, vertices))!=plane.whichSide(getVec(pidx2, vertices)))//r.intersect(getVec(t11,vertices), getVec(t12,vertices), curr.pos))/*r.intersect(getVec(t11,vertices), getVec(t12,vertices), getVec(t13,vertices))
+               // ||r.intersect(getVec(t21,vertices), getVec(t22,vertices), getVec(t23,vertices)) )*/
         {
             dir=-1;
         }
@@ -371,6 +390,19 @@ public class Segment
         return iidx;
     }
     
+    public void addCollidable()
+    {
+        renderer.removeFromScene(trimesh);
+        renderer.addtoSceneCol(trimesh);
+        trimesh.setModelBound(new BoundingBox());
+        collidable=true;
+    }
+    
+    public Vector3f getLastRotation()
+    {
+        return last_rotation;
+    }
+    
     public void update()
     {
         if(points.size()>1)
@@ -395,11 +427,11 @@ public class Segment
             if( it.hasNext())
                 next=it.next();
                 
-            idx=addPoints(idx, prev, curr, null, vertices, normals);
+            idx=addPoints(idx, prev, curr, null, vertices, normals, true);
 
             boolean first=true;
             while( first || next!=null)
-            {                  
+            {       
                 if( !first)
                 {
                     curr=next;
@@ -411,7 +443,7 @@ public class Segment
                 else
                     first=false;
                 
-                idx=addPoints(idx,curr,prev, null, vertices, normals);           
+                idx=addPoints(idx,curr,prev, next, vertices, normals, false);           
                 iidx=calculateIndexes(iidx, idx, indexes, vertices, prev, curr);
                 
                 prev=curr;
@@ -433,9 +465,60 @@ public class Segment
             trimesh.updateRenderState();
             trimesh.updateGeometricState(0.1f, true);
             
-            setColor(ColorRGBA.red);
+            setColor(calculateColor());//ColorRGBA.red);
+            
+            if( collidable)
+            {
+                trimesh.updateModelBound();
+            }
         }
     }  
+    
+    private float ByteColorToFloat(float bc)
+    {
+        return bc*(1.0f/255.f);
+    }
+    
+    public ColorRGBA calculateColor()
+    {
+        float age=getAge();
+        
+        ColorRGBA color=new ColorRGBA();
+        
+        if( age>=Settings.view_root_end_age)
+        {
+            color.a=1.f;
+            color.b=ByteColorToFloat(Settings.view_root_color_blue_end);
+            color.r=ByteColorToFloat(Settings.view_root_color_red_end);
+            color.g=ByteColorToFloat(Settings.view_root_color_green_end);
+            return color;
+        }
+        
+        {
+            float m=(float)(Settings.view_root_color_blue_end-Settings.view_root_color_blue_start)/Settings.view_root_end_age;
+            float c=(float)Settings.view_root_color_blue_start;
+            
+            color.b=ByteColorToFloat(m*age+c);
+        }
+        
+        {
+            float m=(float)(Settings.view_root_color_red_end-Settings.view_root_color_red_start)/Settings.view_root_end_age;
+            float c=(float)Settings.view_root_color_red_start;
+            
+            color.r=ByteColorToFloat(m*age+c);
+        }
+        
+        {
+            float m=(float)(Settings.view_root_color_green_end-Settings.view_root_color_green_start)/Settings.view_root_end_age;
+            float c=(float)Settings.view_root_color_green_start;
+            
+            color.g=ByteColorToFloat(m*age+c);
+        }
+        
+        color.a=1.f;
+        
+        return color;
+    }
     
     public void setColor(ColorRGBA color)
     {

@@ -34,7 +34,7 @@ public class RootPoints
     {
         this.sim=sim;
         this.renderer=renderer;
-        spitze=new Segment(renderer, true, sim);
+        spitze=new Segment(renderer, true, sim, null);
         this.korn=korn;
     }
     
@@ -78,8 +78,12 @@ public class RootPoints
             if( spitze.getSize()>=Settings.view_root_segment_size)
             {
                 spitze.setDetail(false);
+                if(segments.size()>0)
+                {
+                    segments.get(segments.size()-1).addCollidable();
+                }
                 segments.add(spitze);
-                spitze=new Segment(renderer, true, sim);
+                spitze=new Segment(renderer, true, sim, spitze);
                 spitze.add(p);
                 spitze.update();
             } 
@@ -178,6 +182,17 @@ public class RootPoints
         return sim.getSimulatedTime()-p.age;
     }
     
+    public int getRealIdx(int idx)
+    {
+        if( idx>=0)
+        {
+            return idx;
+        }
+        else
+        {
+            return points.size()+idx;
+        }
+    }
     
     
     public void setPoint(Vector3f pos, int idx)
@@ -215,5 +230,10 @@ public class RootPoints
         }
         else
             return null;
+    }
+    
+    public int getSize()
+    {
+        return points.size();
     }
 }

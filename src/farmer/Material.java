@@ -6,6 +6,7 @@
 package farmer;
 
 //JME includes
+import com.jme.bounding.BoundingBox;
 import com.jme.scene.Node;
 import com.jme.scene.Spatial;
 import com.jme.scene.shape.*;
@@ -31,6 +32,7 @@ public class Material implements Positionable, Serializable
     private File file;
     private int scale=5;
     private PointStore ps;
+    private PointStore waterps;
     
     private static int numMat=0;
     
@@ -121,12 +123,9 @@ public class Material implements Positionable, Serializable
             return 0;
     }
     
-    public void calculateDensity(float density)
+    public void searchPoints(float density, Points<Boolean> points, List<Vector3f>pointlist, Vector3f min, Vector3f max)
     {
-        Vector3f center=node.getWorldBound().getCenter();    
-        
-        Points<Boolean> points=new Points<Boolean>();
-        List<Vector3f> pointlist=new LinkedList<Vector3f>();
+        Vector3f center=node.getWorldBound().getCenter(); 
         
         List<Vector3f> queue=new LinkedList<Vector3f>();
         queue.add(center);
@@ -148,31 +147,84 @@ public class Material implements Positionable, Serializable
             for(int i=0;i<pts.length;++i)
             {
                 Vector3f cp=pts[i];
-                if( points.containsPoint(cp)==false && testPoint(p, cp) )
+                if( points.containsPoint(cp)==false  )
                 {
-                    queue.add(cp);
-                    pointlist.add(cp);
-                    points.addPoint(cp, true);
-                    
-                    if( minx==null || cp.x<minx)
-                        minx=cp.x;
-                    if( miny==null || cp.y<miny)
-                        miny=cp.y;
-                    if( minz==null || cp.z<minz)
-                        minz=cp.z;
-                    
-                    if( maxx==null || cp.x>maxx)
-                        maxx=cp.x;
-                    if( maxy==null || cp.y>maxy)
-                        maxy=cp.y;
-                    if( maxz==null || cp.z>maxz)
-                        maxz=cp.z;
+                    if( (Settings.sim_calc_pointsearch_test_center && testPoint(center, cp)) || (!Settings.sim_calc_pointsearch_test_center && testPoint(p, cp)))
+                    {
+                        queue.add(cp);
+                        pointlist.add(cp);
+                        points.addPoint(cp, true);
+
+                        if( minx==null || cp.x<minx)
+                            minx=cp.x;
+                        if( miny==null || cp.y<miny)
+                            miny=cp.y;
+                        if( minz==null || cp.z<minz)
+                            minz=cp.z;
+
+                        if( maxx==null || cp.x>maxx)
+                            maxx=cp.x;
+                        if( maxy==null || cp.y>maxy)
+                            maxy=cp.y;
+                        if( maxz==null || cp.z>maxz)
+                            maxz=cp.z;
+                    }
                 }
             }
+        } 
+        
+        max.set(new Vector3f(maxx, maxy, maxz));
+        min.set(new Vector3f(minx, miny, minz));
+    }
+    
+    
+    
+    public void searchWaterPoints(float density)
+    {
+        density*=Settings.sim_calc_water_density_fac;
+        
+        Points<Boolean> points=new Points<Boolean>();
+        List<Vector3f> pointlist=new LinkedList<Vector3f>();
+        
+        Vector3f max=new Vector3f();
+        Vector3f min=new Vector3f();
+        
+        searchPoints(density, points, pointlist, min, max);
+        
+        MainForm.setStatus("Setzte Wert "+Settings.sim_calc_water_default+" für "+pointlist.size()+" Punkte...");
+        
+        ListIterator<Vector3f> it=pointlist.listIterator();
+        
+        waterps=new PointStore(min, max, density);
+        
+        while(it.hasNext())
+        {
+            Vector3f curr=it.next();
+            waterps.setPoint(curr, Settings.sim_calc_water_default);    
         }
         
-        Vector3f max=new Vector3f(maxx, maxy, maxz);
-        Vector3f min=new Vector3f(minx, miny, minz);
+        MainForm.setStatus("");
+    }
+    
+    public byte getWater(Vector3f point)
+    {
+        if( waterps!=null )
+            return waterps.getPoint(point);
+        else
+            return 0;
+    }
+            
+    
+    public void calculateDensity(float density)
+    {       
+        Points<Boolean> points=new Points<Boolean>();
+        List<Vector3f> pointlist=new LinkedList<Vector3f>();
+        
+        Vector3f max=new Vector3f();
+        Vector3f min=new Vector3f();
+        
+        searchPoints(density, points, pointlist, min, max);        
+        
         
         MainForm.print("Found "+pointlist.size()+" Points");
         MainForm.print("Adding to PointStore...");
@@ -189,20 +241,24 @@ public class Material implements Positionable, Serializable
                 while(it.hasNext())
                 {
                     Vector3f pos=it.next();
-                    Vector3f []pts=Math3D.getSurroundingPoints(pos, density);
+                    
                     int set=0;
-                    for(int i=0;i<pts.length;++i)
+                    if(Settings.sim_calc_density_stronger_interpolation)
                     {
-                        byte b;
-                        if( ps.isSet(pts[i]) )
+                        Vector3f []pts=Math3D.getSurroundingPoints(pos, density);
+                        for(int i=0;i<pts.length;++i)
                         {
-                            ++set;
+                            byte b;
+                            if( ps.isSet(pts[i]) )
+                            {
+                                ++set;
+                            }
                         }
                     }
                     if( set==0)
                     {
                         int rnd=(int)(Math.random()*100.f+0.5f);
-                        if( rnd<10)
+                        if( rnd<Settings.sim_calc_density_random_percent)
                         {
                             ps.setPoint(pos, (byte)(Math.random()*255.f-128.f+0.5f));
                             it.remove();
@@ -270,12 +326,12 @@ public class Material implements Positionable, Serializable
     {
         if( pc==0 )
         {
-            renderer.removeFromScene(node);
+            renderer.removeFromSceneMat(node);
         }
         else
         {
-            if(renderer.isInScene(node)==false)
-                renderer.addtoScene(node);
+            if(renderer.isInSceneMat(node)==false)
+                renderer.addtoSceneMat(node);
             
             if( pc==100 )
             {

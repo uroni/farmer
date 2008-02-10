@@ -79,7 +79,7 @@ import java.util.*;
 public class Render3D extends JMECanvasImplementor {
 
     // Items for scene
-    protected Node rootNode, colNode;
+    protected Node rootNode, colNode, materialNode;
     
     protected Text fps;
 
@@ -142,16 +142,13 @@ public class Render3D extends JMECanvasImplementor {
         
         cam = renderer.createCamera(width, height);
 
-        /** Set up how our camera sees. */
-        cam.setFrustumPerspective(45.0f, (float) width / (float) height, 1,
-                1000);
+        cam.setFrustumPerspective(45.0f, (float) width / (float) height, 1,   10000);
+        cam.setParallelProjection( false );
         Vector3f loc = new Vector3f(0.0f, 0.0f, 25.0f);
         Vector3f left = new Vector3f(-1.0f, 0.0f, 0.0f);
         Vector3f up = new Vector3f(0.0f, 1.0f, 0.0f);
         Vector3f dir = new Vector3f(0.0f, 0f, -1.0f);
-        /** Move our camera to a correct place and orientation. */
         cam.setFrame(loc, left, up, dir);
-        /** Signal that we've changed our camera's location/frustum. */
         cam.update();
         /** Assign the camera to this renderer. */
         renderer.setCamera(cam);
@@ -215,7 +212,7 @@ public class Render3D extends JMECanvasImplementor {
         p5.pos=new Vector3f(35,-2,0);
         p5.korn=null;
         
-        Segment s=new Segment(this);
+        Segment s=new Segment(this, true ,MainForm.getMainForm().getSimulation());
         s.add(p2);
         s.add(p1);
         s.add(p3);
@@ -431,6 +428,12 @@ public class Render3D extends JMECanvasImplementor {
         rootNode.updateRenderState();
     }
     
+    public void addtoSceneMat(Spatial node)
+    {
+        materialNode.attachChild(node);
+        materialNode.updateRenderState();
+    }
+    
     public void addtoSceneCol(Spatial node)
     {
         colNode.attachChild(node);
@@ -447,6 +450,12 @@ public class Render3D extends JMECanvasImplementor {
     {
         colNode.attachChild(node);
         colNode.updateRenderState();
+    }
+    
+    public void removeFromSceneMat(Spatial node)
+    {
+        materialNode.attachChild(node);
+        materialNode.updateRenderState();
     }
     
     public MaterialState createMaterialState()
@@ -508,6 +517,11 @@ public class Render3D extends JMECanvasImplementor {
         node.updateRenderState();
     }
     
+    public DisplaySystem getDisplay()
+    {
+        return display;
+    }
+    
     public void newRootNode()
     {
         rootNode = new Node("rootNode");
@@ -525,9 +539,12 @@ public class Render3D extends JMECanvasImplementor {
         rootNode.setRenderQueueMode(Renderer.QUEUE_OPAQUE);
         
         colNode=new Node("Collision Node");
+        materialNode=new Node("Material Node");
         rootNode.attachChild(colNode);
+        rootNode.attachChild(materialNode);
         
         colNode.setRenderQueueMode(Renderer.QUEUE_OPAQUE);
+        materialNode.setRenderQueueMode(Renderer.QUEUE_OPAQUE);
         
         rootNode.updateGeometricState(0.0f, true);
         rootNode.updateRenderState();
@@ -576,9 +593,41 @@ public class Render3D extends JMECanvasImplementor {
         return rootNode.hasChild(node);
     }
     
+    public boolean isInSceneMat(Spatial node)
+    {
+        return materialNode.hasChild(node);
+    }
+    
     public boolean isInSceneCol(Spatial node)
     {
         return colNode.hasChild(node);
+    }
+    
+    public Vector3f getPick(Ray ray)
+    {
+        TrianglePickResults trp=new TrianglePickResults();
+        trp.setCheckDistance(true);
+        materialNode.findPick(ray, trp);
+        
+        if( trp.getNumber()>0)
+        {
+            PickData pData = trp.getPickData(0);
+            ArrayList<Integer> al=pData.getTargetTris();
+            TriangleBatch mesh=(TriangleBatch)pData.getTargetMesh();
+            
+            int triIndex=al.get(0);
+            Vector3f []trivec=new Vector3f[3];
+            mesh.getTriangle(triIndex, trivec);
+            
+            Vector3f ret=new Vector3f(0,0,0);
+            boolean b=ray.intersectWhere(trivec[0], trivec[1], trivec[2], ret);
+            if(!b)
+                System.out.println("Unable to find intersection point in getPick!");
+            
+            return ret;
+        }
+        
+        return null;
     }
     
     public Vector3f[] collides(Vector3f lineStart, Vector3f lineEnd, Spatial target, Node exclude, boolean checkOnly, float add_distance)
@@ -647,6 +696,23 @@ public class Render3D extends JMECanvasImplementor {
         it.ig=ig;
         it.tex=tex;
         updateTextures.add(it);
+    }
+    
+    public boolean removeUpdateTexture(ImageGraphics ig)
+    {
+        ListIterator<ImageTexture> it=updateTextures.listIterator();
+        
+        while(it.hasNext())
+        {
+            ImageTexture ff=it.next();
+            
+            if(ff.ig==ig)
+            {
+                it.remove();
+                return true;
+            }
+        }
+        return false;
     }
     
     public void setImageTexturesDirty(boolean b)

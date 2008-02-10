@@ -44,22 +44,30 @@ public class Wurzel implements Positionable, Serializable{
     private transient Simulation sim;
     private transient int straigt_timeleft;
     private transient  Sphere []circle_nodes;
+    private transient boolean first_sim;
+    private transient float sim_length;
+    private transient float sim_start;
+    private transient JunctionManager jmgr;
+    private transient float next_junction_time;
+    private transient float gravity_time;
+    private transient boolean isChild;
     
-    public Wurzel(String name, Render3D renderer, Korn k, Simulation sim)
+    public Wurzel(String name, Render3D renderer, Korn k, Simulation sim, boolean child)
     {
-        init(name, renderer, k, sim);
+        init(name, renderer, k, sim, child);
     }
     
-    public void init(String name, Render3D renderer, Korn k, Simulation sim)
+    public void init(String name, Render3D renderer, Korn k, Simulation sim, boolean child)
     {
         this.renderer=renderer;
         this.name=name;
         this.sim=sim;
+        this.first_sim=!child;
+        this.isChild=child;
         korn=k;
         
         arrow=new Arrow("arrow", Settings.view_root_arrow_length, Settings.view_root_arrow_width);
-        k.addNode(arrow);
-        renderer.disableLightning(arrow);
+        //k.addNode(arrow);
         
         rp=new RootPoints(sim, renderer, korn);
         k.addNode(rp.getNode());
@@ -72,6 +80,28 @@ public class Wurzel implements Positionable, Serializable{
         recalculateGravity();
         //updateCircle();
         last_intersection_direction_age=0;
+        //first_sim=true;
+        
+        jmgr=new JunctionManager(renderer, korn, rp);
+        next_junction_time=-1;
+        
+        if( child==true)
+        {
+            sim_start=sim.getSimulatedTime();
+            gravity_time=sim_start+Settings.sim_root_junction_no_gravity_time;
+        }
+        else
+            gravity_time=sim.getSimulatedTime();
+    }
+    
+    public void setCurrDirection(Vector3f dir)
+    {
+        curr_direction=dir;
+    }
+    
+    public void setCurrPosition(Vector3f pos)
+    {
+        curr_position=pos;
     }
     
     public String getName()
@@ -158,8 +188,10 @@ public class Wurzel implements Positionable, Serializable{
             arrow.setLocalTranslation(position);
             setRotation(rotation);
             
-            //korn.addNode(arrow);
+            if( !korn.isInScene(arrow))
+                korn.addNode(arrow);
             
+            renderer.disableLightning(arrow);
             showArrow=true;
         }
         else if( showArrow==true && b==false )
@@ -229,13 +261,53 @@ public class Wurzel implements Positionable, Serializable{
         return ino;
     }
     
-    public void step(float time)
+    public float getAge()
     {
+        return sim.getSimulatedTime()-sim_start;
+    }
+    
+    public void setNextJunction()
+    {
+        next_junction_time=sim.getSimulatedTime()+FastMath.rand.nextFloat()*(Settings.sim_root_junction_max_time_between-Settings.sim_root_junction_min_time_between)+Settings.sim_root_junction_min_time_between;
+    }
+    
+    public boolean makeJunctions()
+    {
+        if( next_junction_time==-1)
+        {
+            if( getAge()>=Settings.sim_root_junction_min_timeleft)
+            {
+                setNextJunction();
+            }
+        }
+        else if( sim.getSimulatedTime()>=next_junction_time)
+        {
+            setNextJunction();
+            
+            return jmgr.addJunction();
+        }
+        
+        return false;
+    }
+    
+    public boolean step(float time)
+    {
+        if( first_sim==true)
+        {
+            first_sim=false;
+            curr_position=position;
+            rotation.x-=90;
+            curr_direction=Math3D.getTarget(position, rotation, 1.f);
+            sim_start=sim.getSimulatedTime();
+        }
+        
         float max_step=time*0.0001f;
         
         Vector3f target=curr_position.clone();
         
+        Vector3f old_direction=curr_direction.clone();
         curr_direction.normalizeLocal();       
+        Vector3f old_position=curr_position.clone();
         
         float deg=curr_direction.angleBetween(gravity.normalize())*FastMath.RAD_TO_DEG;
         curr_direction.multLocal(Settings.sim_root_gravity_influence1);
@@ -250,30 +322,40 @@ public class Wurzel implements Positionable, Serializable{
             dir=-1;
         }
         
-        float beug;
-        if( Settings.sim_root_gravity_func==0)
+        if( isChild==false || sim.getSimulatedTime()>=gravity_time)
         {
-            float a=Settings.sim_root_gravity_max/(FastMath.exp(-1*Settings.sim_root_gravity_k*Settings.sim_root_gravity_min_deg));
-            beug=Settings.sim_root_gravity_max-a*FastMath.exp(-1*Settings.sim_root_gravity_k*deg);
+            float beug;
+            if( Settings.sim_root_gravity_func==0)
+            {
+                float a=Settings.sim_root_gravity_max/(FastMath.exp(-1*Settings.sim_root_gravity_k*Settings.sim_root_gravity_min_deg));
+                beug=Settings.sim_root_gravity_max-a*FastMath.exp(-1*Settings.sim_root_gravity_k*deg);
+            }
+            else
+            {
+                beug=Settings.sim_root_gravity_max*(1/(1+FastMath.exp((Settings.sim_root_gravity_add-deg)*Settings.sim_root_gravity_k2)));
+            }
+            if( beug>0)
+            {
+                Vector3f tmpg=gravity.clone();
+                tmpg.multLocal(dir*beug*time*Settings.sim_root_gravity_influence2);
+                curr_direction.addLocal(tmpg);
+            }
+
+            curr_direction.normalizeLocal();
+            curr_direction.multLocal(max_step);
+
+            target.addLocal(curr_direction);
+            
+            
+            curr_position=target;
         }
         else
         {
-            beug=Settings.sim_root_gravity_max*(1/(1+FastMath.exp((Settings.sim_root_gravity_add-deg)*Settings.sim_root_gravity_k2)));
+            curr_direction.normalizeLocal();
+            curr_direction.multLocal(max_step);
+            target.addLocal(curr_direction);
+            curr_position=target;
         }
-        if( beug>0)
-        {
-            Vector3f tmpg=gravity.clone();
-            tmpg.multLocal(dir*beug*time*Settings.sim_root_gravity_influence2);
-            curr_direction.addLocal(tmpg);
-        }
-        
-        curr_direction.normalizeLocal();
-        curr_direction.multLocal(max_step);
-        
-        target.addLocal(curr_direction);
-        
-        Vector3f old_position=curr_position.clone();
-        curr_position=target;
         
         
         {
@@ -308,6 +390,8 @@ public class Wurzel implements Positionable, Serializable{
         Vector3f []tri;
         boolean intersection=false;
 
+        if( getAge()>Settings.sim_root_min_collision_age && rp.getSize()>5)
+        {
             int t=0;
             do
             {
@@ -335,7 +419,9 @@ public class Wurzel implements Positionable, Serializable{
                     curr_position.addLocal(curr_direction);
                     intersection=true;
                 }
+                ++t;
             }while(tri!=null && t<3);
+        }
 
         
         if( intersection && Settings.sim_root_collision_quirk )
@@ -421,6 +507,9 @@ public class Wurzel implements Positionable, Serializable{
             
             curr_position=rp.getPointPos(-1).add(curr_direction_copy);
         }*/
+        float dlength=curr_direction.length();
+        
+        boolean new_point=true;
         
         if(intersection)
         {
@@ -428,8 +517,6 @@ public class Wurzel implements Positionable, Serializable{
             float r;
             while((r=rp.getAge(idx))<=Settings.sim_collision_straigt_time_back && r!=0)--idx;
             ++idx;
-            
-            float dlength=curr_direction.length();
             
             ArrayList<Vector3f> points=new ArrayList<Vector3f>();
             points.ensureCapacity(idx*-1);
@@ -489,20 +576,44 @@ public class Wurzel implements Positionable, Serializable{
                 ++idx;
             }
             
+            
             curr_position=rp.getPointPos(-1).clone();
             Vector3f curr_direction_neu=rp.getPointPos(-1).subtract(rp.getPointPos(-2));
             if( curr_direction_neu.normalize().angleBetween(curr_direction.normalize()) <=Settings.sim_collision_straigt_min_degree)
             {
                 curr_position.addLocal(curr_direction.normalize().mult(dlength));
-                rp.addPoint(curr_position);
+                sim_length+=dlength;
+                
             }
             else
             {
                 curr_direction=curr_direction_neu;
-            }           
+                new_point=false;
+            }       
         }
         else        
+        {
+            sim_length+=dlength;
+            
+        }
+        
+        if( new_point)
+        {
             rp.addPoint(curr_position);
+            if( rp.getSize()>3)
+            {
+                jmgr.addPoint(time, -2);
+            }
+        }
+        
+        if( makeJunctions()==true )
+            return false;
+        return true;
+    }
+    
+    public float getLength()
+    {
+        return sim_length;
     }
 }
 

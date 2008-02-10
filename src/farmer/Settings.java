@@ -5,6 +5,7 @@
 
 package farmer;
 
+import com.jme.math.FastMath;
 import java.io.Serializable;
 import com.jme.math.Vector3f;
 
@@ -27,7 +28,7 @@ public class Settings implements Serializable
     public static float camera_min_view_distance=10.f;
     public static float view_root_arrow_length=0.4f;
     public static float view_root_arrow_width=0.04f;
-    public static int sim_corn_init_root_count=1;
+    public static int sim_corn_init_root_count=2;
     public static float ctrl_corn_pos_step=0.1f;
     public static float ctrl_corn_rot_step=0.6f;
     public static float ctrl_root_pos_step=0.02f;
@@ -77,10 +78,10 @@ public class Settings implements Serializable
     public static boolean sim_root_collision_quirk=true;
     public static float view_root_ambient_pc=0.5f;
     public static float view_root_detail=0.1f; //Smaller=>more
-    public static float sim_root_thikness=0.004f;
+    public static float sim_root_thikness=0.01f;
     public static float sim_root_pointness=0.01f; 
     public static float sim_root_stage1_updatetime=0.f;
-    public static float sim_root_stage2_updatetime=100.f;
+    public static float sim_root_stage2_updatetime=10.f;
     public static float sim_root_stage3_updatetime=1000.f;
     public static float sim_root_stage4_updatetime=10000.f;
     public static float sim_root_stage5_updatetime=100000.f;
@@ -94,4 +95,30 @@ public class Settings implements Serializable
     public static int view_root_display_mode=2; //1=line 2=pipe 3=both
     public static int sim_root_density_probes=10;
     public static float sim_root_density_probes_max_distance_mult=0.0000005f;
+    public static int view_root_color_green_start=255;
+    public static int view_root_color_red_start=255;
+    public static int view_root_color_blue_start=170;
+    public static int view_root_color_green_end=130;
+    public static int view_root_color_red_end=130;
+    public static int view_root_color_blue_end=0;
+    public static float view_root_end_age=1000000.f;
+    public static float inf_units_to_centimeters=1.0f;
+    public static float inf_simtime_to_time=1.5f;
+    public static float sim_root_junction_add_limit=0.00001f;
+    public static float sim_root_junction_add=0.f;
+    public static float sim_root_junction_prob_fac=0.1f;
+    public static float sim_root_junction_erase_distance=10.f;
+    public static float sim_root_junction_min_timeleft=100000.f;
+    public static float sim_root_junction_min_time_between=10000.f;
+    public static float sim_root_junction_max_time_between=200000.f;
+    public static float sim_root_min_collision_age=100.f;
+    public static float sim_root_junction_no_gravity_time=100.f;
+    public static float sim_root_junction_col_check_distance=4.f;
+    public static float sim_calc_water_density_fac=2.f;
+    public static byte sim_calc_water_default=1;
+    public static float view_water_pick_sphere_size=10.f;
+    public static boolean sim_calc_pointsearch_test_center=true;
+    public static int sim_calc_density_random_percent=100;
+    public static boolean sim_calc_density_stronger_interpolation=false;
+    public static float sim_root_junction_interpolation_age=1000.f;
 }

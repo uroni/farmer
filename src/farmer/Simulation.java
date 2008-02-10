@@ -233,6 +233,41 @@ public class Simulation implements Serializable
         t1.start();
     }
     
+    public void initWater(float density)
+    {
+        final float dens=density;
+        setStopped(true);
+        Thread t1=new Thread(new Runnable(){
+            public void run()
+            {        
+                synchronized(point_mutex)
+                {
+                    ListIterator<Material> it=materials.listIterator();
+                    while(it.hasNext())
+                    {
+                        Material m=it.next();
+                        m.searchWaterPoints(dens);
+                    } 
+                    setStopped(false);
+                }
+            }
+        });
+        t1.start();
+    }
+    
+    public int getWaterAmount(Vector3f p)
+    {
+        int ret=0;
+        ListIterator<Material> it=materials.listIterator();
+        while(it.hasNext())
+        {
+            Material m=it.next();
+            ret+=m.getWater(p)+128;
+        }
+        
+        return ret;
+    }
+    
     public float getDensity(Vector3f p, boolean dv)
     {
         int count=0;
