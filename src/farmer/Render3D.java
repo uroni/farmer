@@ -70,6 +70,9 @@ import com.jme.image.Texture;
 import com.jme.intersection.PickData;
 import com.jme.math.Plane;
 import com.jme.scene.batch.TriangleBatch;
+import com.jme.util.GameTaskQueue;
+import com.jme.util.GameTaskQueueManager;
+import com.jme.util.GameTaskQueueManager;
 import java.util.*;
 
 /**
@@ -297,7 +300,7 @@ public class Render3D extends JMECanvasImplementor {
     public void doUpdate() {
         if(!setup)
             return;
-
+        
         timer.update();
         /** Update tpf to time per frame according to the Timer. */
         tpf = timer.getTimePerFrame();
@@ -615,22 +618,30 @@ public class Render3D extends JMECanvasImplementor {
             ArrayList<Integer> al=pData.getTargetTris();
             TriangleBatch mesh=(TriangleBatch)pData.getTargetMesh();
             
-            int triIndex=al.get(0);
-            Vector3f []trivec=new Vector3f[3];
-            mesh.getTriangle(triIndex, trivec);
-            
-            Vector3f ret=new Vector3f(0,0,0);
-            boolean b=ray.intersectWhere(trivec[0], trivec[1], trivec[2], ret);
-            if(!b)
-                System.out.println("Unable to find intersection point in getPick!");
-            
-            return ret;
+            if( al.size()>0)
+            {
+                int triIndex=al.get(0);
+                Vector3f []trivec=new Vector3f[3];
+                mesh.getTriangle(triIndex, trivec);
+                
+                for(int i=0;i<trivec.length;++i)
+                {
+                    mesh.getParentGeom().localToWorld(trivec[i], trivec[i]);
+                }
+
+                Vector3f ret=new Vector3f(0,0,0);
+                boolean b=ray.intersectWhere(trivec[0], trivec[1], trivec[2], ret);
+                if(!b)
+                    System.out.println("Unable to find intersection point in getPick!");
+
+                return ret;
+            }
         }
         
         return null;
     }
     
-    public Vector3f[] collides(Vector3f lineStart, Vector3f lineEnd, Spatial target, Node exclude, boolean checkOnly, float add_distance)
+    public Vector3f[] collides(Vector3f lineStart, Vector3f lineEnd, Spatial target, Geometry exclude, boolean checkOnly, float add_distance)
     {    
         if( target==null)
             target=colNode;
@@ -643,7 +654,7 @@ public class Render3D extends JMECanvasImplementor {
             vec.normalizeLocal();
             if( add_distance!=0 )
             {
-                lineStart.addLocal(vec.mult(-1*add_distance));
+                lineStart=lineStart.add(vec.mult(-1*add_distance));
             }
             Ray ray=new Ray(lineStart, vec);
             TrianglePickResults trp=new TrianglePickResults();
@@ -654,7 +665,7 @@ public class Render3D extends JMECanvasImplementor {
             {
                 if( trp.getPickData(i).getDistance()<=distance )
                 {
-                    if( exclude!=null && exclude.hasChild(trp.getPickData(i).getTargetMesh().getParentGeom()) )
+                    if( exclude!=null && exclude==trp.getPickData(i).getTargetMesh().getParentGeom() )//exclude.hasChild(trp.getPickData(i).getTargetMesh().getParentGeom()) )
                         continue;
                     
                     if( checkOnly == true)

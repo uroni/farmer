@@ -42,6 +42,7 @@ public class Segment
     private boolean collidable;
     private Segment previous;
     private Vector3f last_rotation=new Vector3f(0,0,0);
+    private static int number=1;
     
     public Segment(Render3D renderer, boolean use_detail, Simulation sim, Segment previous)
     {
@@ -54,7 +55,7 @@ public class Segment
         points=new LinkedList<RPoint>();
         this.renderer=renderer;
         this.previous=previous;
-        trimesh=new TriMesh("test");
+        trimesh=new TriMesh("test"+number++);
         this.use_detail=use_detail;
         simulation=sim;
         //trimesh.setLightCombineMode(LightState.OFF);
@@ -477,6 +478,11 @@ public class Segment
     private float ByteColorToFloat(float bc)
     {
         return bc*(1.0f/255.f);
+    }
+    
+    public TriMesh getTriMesh()
+    {
+        return trimesh;
     }
     
     public ColorRGBA calculateColor()

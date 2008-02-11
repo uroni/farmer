@@ -67,6 +67,7 @@ public class RootPoints
         p.age=sim.getSimulatedTime();
         p.pos=pos;
         p.korn=korn;
+        p.segment=spitze;
         points.add(p);
         if( Settings.view_root_display_mode==1 || Settings.view_root_display_mode==3)
             line.addPoint(pos);
@@ -180,6 +181,24 @@ public class RootPoints
         }
         
         return sim.getSimulatedTime()-p.age;
+    }
+    
+    public Segment getSegment(int idx)
+    {
+        RPoint p;
+        try
+        {
+            if( idx>=0)
+                p=points.get(idx);
+            else
+                p=points.get(points.size()+idx);
+        }
+        catch(IndexOutOfBoundsException e)
+        {
+            return null;
+        }
+        
+        return p.segment;
     }
     
     public int getRealIdx(int idx)

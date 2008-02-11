@@ -143,7 +143,8 @@ public class JunctionManager
             {
                 Vector3f dir=caclulateNormal(j.curr);
                 Vector3f nextp=curr.add(dir.mult(Settings.sim_root_junction_col_check_distance));
-                if( renderer.collides(curr, nextp, null, null, true, 0.f)==null )
+                //Vector3f start=curr.add(dir.mult(Settings.sim_root_thikness*Settings.sim_root_junction_add));
+                if( renderer.collides(korn.getWorldCoordinates(curr), korn.getWorldCoordinates(nextp), null, rpoints.getSegment(j.curr).getTriMesh(), true, 0.f)==null )
                 {
                     korn.addWurzel(curr, dir);
                     

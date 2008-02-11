@@ -29,6 +29,7 @@ public class Simulation implements Serializable
     private transient float speed;
     private transient long lastsimtime;
     private transient float simulatedtime;
+    private transient boolean stop_current_operation;
     
     public Simulation(Render3D renderer, MainForm form)
     {
@@ -76,7 +77,7 @@ public class Simulation implements Serializable
             while(it.hasNext())
             {
                 Material s=it.next();
-                s.init(renderer);
+                s.init(renderer, this);
                 form.addMaterial(s, null);
             }
         }
@@ -88,6 +89,22 @@ public class Simulation implements Serializable
         }
         renderer.setCamera(camera);
     }
+    
+    public synchronized void stopCurrentOperation()
+    {
+        if( stopped==true )
+        {
+            stop_current_operation=true;
+        }
+    }
+    
+    public synchronized boolean shouldStopOperation()
+    {
+        boolean b=stop_current_operation;
+        stop_current_operation=false;
+        return b;
+    }
+    
     
     public void addLight(MyLight l)
     {
@@ -266,6 +283,18 @@ public class Simulation implements Serializable
         }
         
         return ret;
+    }
+    
+    public void addWaterPoint(Vector3f p, float r, int amount)
+    {
+        ListIterator<Material> it=materials.listIterator();
+        byte ramount=(byte)(amount-128);
+        if( ramount==0)--ramount;
+        while(it.hasNext())
+        {
+            Material m=it.next();
+            m.setWaterPoint(p,r, ramount);
+        }
     }
     
     public float getDensity(Vector3f p, boolean dv)

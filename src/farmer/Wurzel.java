@@ -27,112 +27,17 @@ import java.util.ListIterator;
  *
  * @author Martin
  */
-public class Wurzel implements Positionable, Serializable{
-    private Vector3f position=new Vector3f(0,0,0);
-    private Vector3f rotation=new Vector3f(0,0,0);
-    private float speed=1.f;
-    private transient boolean showArrow=false;
-    private transient Arrow arrow;
-    private transient Render3D renderer;
-    private transient String name;
-    private transient Korn korn;
-    private transient RootPoints rp;
-    private transient Vector3f curr_position,curr_direction;
+public class Wurzel extends GrowableAdapter
+{
     private transient Vector3f last_intersection_direction;
-    private transient float last_intersection_direction_age;
-    private transient Vector3f gravity;
-    private transient Simulation sim;
     private transient int straigt_timeleft;
     private transient  Sphere []circle_nodes;
-    private transient boolean first_sim;
-    private transient float sim_length;
-    private transient float sim_start;
-    private transient JunctionManager jmgr;
-    private transient float next_junction_time;
-    private transient float gravity_time;
-    private transient boolean isChild;
     
     public Wurzel(String name, Render3D renderer, Korn k, Simulation sim, boolean child)
     {
-        init(name, renderer, k, sim, child);
+        super(name, renderer, k, sim, child);
     }
-    
-    public void init(String name, Render3D renderer, Korn k, Simulation sim, boolean child)
-    {
-        this.renderer=renderer;
-        this.name=name;
-        this.sim=sim;
-        this.first_sim=!child;
-        this.isChild=child;
-        korn=k;
-        
-        arrow=new Arrow("arrow", Settings.view_root_arrow_length, Settings.view_root_arrow_width);
-        //k.addNode(arrow);
-        
-        rp=new RootPoints(sim, renderer, korn);
-        k.addNode(rp.getNode());
-        
-        curr_position=position.clone();
-        curr_direction=new Vector3f(0,1,0);
-        
-        gravity=new Vector3f();
-        setRotation(rotation);
-        recalculateGravity();
-        //updateCircle();
-        last_intersection_direction_age=0;
-        //first_sim=true;
-        
-        jmgr=new JunctionManager(renderer, korn, rp);
-        next_junction_time=-1;
-        
-        if( child==true)
-        {
-            sim_start=sim.getSimulatedTime();
-            gravity_time=sim_start+Settings.sim_root_junction_no_gravity_time;
-        }
-        else
-            gravity_time=sim.getSimulatedTime();
-    }
-    
-    public void setCurrDirection(Vector3f dir)
-    {
-        curr_direction=dir;
-    }
-    
-    public void setCurrPosition(Vector3f pos)
-    {
-        curr_position=pos;
-    }
-    
-    public String getName()
-    {
-        return name;
-    }
-    
-    public int getReversed()
-    {
-        return -1;
-    }
-    
-    public Vector3f getPosition()
-    {
-        return arrow.getLocalTranslation();
-    }
-    
-    public void setPosition(Vector3f pos)
-    {
-        arrow.setLocalTranslation(pos);
-        position=pos;
-        //updateCircle();
-    }
-    
-    public void setRotation(Vector3f rot)
-    {
-        rotation=rot;
-        Math3D.setRotation(arrow, rotation);
-        //updateCircle();
-    }
-    
+     
     public void updateCircle()
     {
         Vector3f rot=getRotation();
@@ -152,142 +57,6 @@ public class Wurzel implements Positionable, Serializable{
             }
             circle_nodes[i].setLocalTranslation(circle[i]); 
         }
-    }
-    
-    public void updatePositions()
-    {
-        rp.updateAll();
-    }
-    
-    public void recalculateGravity()
-    {
-        Vector3f nv=new Vector3f(0,0,0);
-        Vector3f nvo=new Vector3f(0,0,0);
-        korn.getNode().worldToLocal(Settings.sim_root_gravity, gravity);
-        korn.getNode().worldToLocal(nv, nvo);
-        gravity.subtractLocal(nvo);
-        gravity.normalizeLocal();
-        gravity.multLocal(Settings.sim_root_gravity.length());
-    }
-    
-    public Vector3f getRotation()
-    {
-        return rotation;
-    }
-    
-    public void setSpeed(float speed)
-    {
-        this.speed=speed;
-    }
-    
-    public void setShowArrow(boolean b)
-    {
-        if( showArrow==false && b==true )
-        {            
-            arrow.setSolidColor(ColorRGBA.red);
-            arrow.setLocalTranslation(position);
-            setRotation(rotation);
-            
-            if( !korn.isInScene(arrow))
-                korn.addNode(arrow);
-            
-            renderer.disableLightning(arrow);
-            showArrow=true;
-        }
-        else if( showArrow==true && b==false )
-        {
-            korn.removeNode(arrow);
-            showArrow=false;
-        }
-    }
-    
-    public String toString()
-    {
-        return name;
-    }
-    
-    public void setOpacity(int pc)
-    {
-        
-    }
-    
-    public int getOpacity(){ return 100; }
-    
-    public float getRotStep(){ return Settings.ctrl_root_rot_step; }
-    public float getPosStep(){ return Settings.ctrl_root_pos_step; }
-    
-    public int getScale()
-    {
-        return 5;
-    }
-    
-    public void setScale(int s)
-    {
-        
-    }
-    
-    private Vector3f worldVector(Vector3f in)
-    {
-        Vector3f out=new Vector3f(0,0,0);
-        korn.getNode().localToWorld(in, out);
-        return out;
-    }
-    
-    private Vector3f worldDirection(Vector3f in)
-    {
-        Vector3f nv=new Vector3f(0,0,0);
-        Vector3f nvo=new Vector3f(0,0,0);
-        Vector3f ino=new Vector3f(0,0,0);
-        korn.getNode().worldToLocal(in, ino);
-        korn.getNode().worldToLocal(nv, nvo);
-        ino.subtractLocal(nvo);
-        ino.normalizeLocal();
-        ino.multLocal(in.length());
-        return ino;
-    }
-    
-    private Vector3f localDirection(Vector3f in)
-    {
-        Vector3f start=new Vector3f(0,0,0);
-        Vector3f starto=new Vector3f(0,0,0);
-        Vector3f ino=new Vector3f(0,0,0);
-        
-        korn.getNode().localToWorld(start, starto);
-        korn.getNode().localToWorld(in, ino);
-        
-        ino.subtractLocal(starto);
-        ino.normalizeLocal();
-        ino.multLocal(in.length());
-        return ino;
-    }
-    
-    public float getAge()
-    {
-        return sim.getSimulatedTime()-sim_start;
-    }
-    
-    public void setNextJunction()
-    {
-        next_junction_time=sim.getSimulatedTime()+FastMath.rand.nextFloat()*(Settings.sim_root_junction_max_time_between-Settings.sim_root_junction_min_time_between)+Settings.sim_root_junction_min_time_between;
-    }
-    
-    public boolean makeJunctions()
-    {
-        if( next_junction_time==-1)
-        {
-            if( getAge()>=Settings.sim_root_junction_min_timeleft)
-            {
-                setNextJunction();
-            }
-        }
-        else if( sim.getSimulatedTime()>=next_junction_time)
-        {
-            setNextJunction();
-            
-            return jmgr.addJunction();
-        }
-        
-        return false;
     }
     
     public boolean step(float time)
@@ -390,7 +159,7 @@ public class Wurzel implements Positionable, Serializable{
         Vector3f []tri;
         boolean intersection=false;
 
-        if( getAge()>Settings.sim_root_min_collision_age && rp.getSize()>5)
+        if( /*getAge()>Settings.sim_root_min_collision_age &&*/ rp.getSize()>5 && sim_length>=Settings.sim_root_min_collision_length)
         {
             int t=0;
             do

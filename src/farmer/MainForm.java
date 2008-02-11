@@ -30,6 +30,9 @@ import com.jme.scene.Node;
 import com.jme.scene.shape.Sphere;
 import com.jme.scene.state.LightState;
 import com.jme.system.DisplaySystem;
+import com.jme.util.GameTaskQueue;
+import com.jme.util.GameTaskQueueManager;
+import java.util.concurrent.Callable;
 
 
  /**
@@ -48,6 +51,7 @@ public class MainForm extends javax.swing.JFrame {
     
     private int mouse_state=0;
     private Sphere water_pick_sphere;
+    private Integer npickactive=0;
     
     private static int MOUSE_STATE_CAMERA=0;
     private static int MOUSE_STATE_WATER_PICK=1;
@@ -230,6 +234,7 @@ public class MainForm extends javax.swing.JFrame {
         jButton1 = new javax.swing.JButton();
         jLabel7 = new javax.swing.JLabel();
         jButton10 = new javax.swing.JButton();
+        jButton27 = new javax.swing.JButton();
         jPanel10 = new javax.swing.JPanel();
         jButton24 = new javax.swing.JButton();
         jLabel19 = new javax.swing.JLabel();
@@ -314,6 +319,11 @@ public class MainForm extends javax.swing.JFrame {
         jPanel14.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
         jPanel14.setLayout(new java.awt.BorderLayout());
 
+        jPanel9.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jPanel9MouseClicked(evt);
+            }
+        });
         jPanel9.addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 doResize(evt);
@@ -327,6 +337,9 @@ public class MainForm extends javax.swing.JFrame {
             }
         });
         canvas3d.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                canvas3dMouseClicked(evt);
+            }
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 MouseDown(evt);
             }
@@ -856,6 +869,13 @@ public class MainForm extends javax.swing.JFrame {
             }
         });
 
+        jButton27.setText("Stop");
+        jButton27.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton27ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -873,8 +893,6 @@ public class MainForm extends javax.swing.JFrame {
                         .addComponent(jLabel13)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jButton15)
-                    .addComponent(jButton1)
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel14)
@@ -885,7 +903,13 @@ public class MainForm extends javax.swing.JFrame {
                             .addGroup(jPanel3Layout.createSequentialGroup()
                                 .addComponent(jButton16)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jCheckBox2)))))
+                                .addComponent(jCheckBox2))))
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jButton15)
+                            .addComponent(jButton1))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton27)))
                 .addGap(60, 60, 60))
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
@@ -913,14 +937,19 @@ public class MainForm extends javax.swing.JFrame {
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(jLabel12)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jButton15)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel13)
-                            .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jButton15)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jButton1)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(jLabel13)
+                                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addGap(25, 25, 25)
+                                .addComponent(jButton27)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jLabel14)
@@ -1439,7 +1468,7 @@ public class MainForm extends javax.swing.JFrame {
     public Material addMaterial(Material s, java.io.File f)
     {
         if( s==null )
-            s=new Material(renderer, f);
+            s=new Material(renderer, f, sim);
         pc.addPositionable(s);
         updatePositionSelectBox();
         return s;
@@ -1906,22 +1935,51 @@ public class MainForm extends javax.swing.JFrame {
         water_pick_sphere=new Sphere("Water Pick Sphere", 30, 30, Settings.view_water_pick_sphere_size);
         water_pick_sphere.setLightCombineMode(LightState.OFF);
         water_pick_sphere.setSolidColor(ColorRGBA.blue);
-        renderer.addtoScene(water_pick_sphere);
+        water_pick_sphere.setLocalTranslation(new Vector3f(0,0,0));
+        synchronized(renderer)
+        {
+            renderer.addtoScene(water_pick_sphere);
+        }
     }//GEN-LAST:event_jButton22ActionPerformed
 
     private void canvas3dMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_canvas3dMouseMoved
         if( mouse_state==MOUSE_STATE_WATER_PICK)
         {
-            Vector2f mp=new Vector2f( evt.getPoint().x, evt.getPoint().y);
-            
-            Vector3f v2=renderer.getDisplay().getWorldCoordinates(mp, 1.0f);
-            Vector3f v1=renderer.getCamera().getLocation();
-            Ray ray=new Ray(v1, v2.subtract(v1));
-            
-            if( (v1=renderer.getPick(ray))!=null )
+            timer.setDelay(Settings.ctrl_position_delay);
+            final java.awt.event.MouseEvent cevt=evt;
+            synchronized(npickactive)
             {
-                water_pick_sphere.setLocalTranslation(v1);
+                ++npickactive;
             }
+            GameTaskQueueManager.getManager().getQueue(GameTaskQueue.UPDATE).setExecuteAll(true);
+            GameTaskQueueManager.getManager().getQueue(GameTaskQueue.UPDATE).enqueue(new Callable(){
+                private java.awt.event.MouseEvent mousepos=cevt;
+                public Object call()
+                {
+                    synchronized(npickactive)
+                    {
+                        --npickactive;
+                    }
+                    if(npickactive!=0)
+                        return null;
+                    
+                    Vector2f mp=new Vector2f( mousepos.getPoint().x, canvas3d.getHeight()-mousepos.getPoint().y);
+            
+                    Vector3f v2=renderer.getDisplay().getWorldCoordinates(mp, 1.0f);
+                    Vector3f v1=renderer.getCamera().getLocation();
+                    Ray ray=new Ray(v1, v2.subtract(v1).normalizeLocal());
+
+                    if( (v1=renderer.getPick(ray))!=null )
+                    {
+                        synchronized(water_pick_sphere)
+                        {
+                            water_pick_sphere.setLocalTranslation(v1);
+                        }
+                    }
+                    return null;
+                }
+            });        
+            
         }
     }//GEN-LAST:event_canvas3dMouseMoved
 
@@ -1939,6 +1997,31 @@ public class MainForm extends javax.swing.JFrame {
         if( sim.isStopped())return;
         sim.addMaterial(addMaterial(null, new java.io.File("WatteTrichter.3ds")));
     }//GEN-LAST:event_jMenuItem15ActionPerformed
+
+    private void jButton27ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton27ActionPerformed
+        sim.stopCurrentOperation();
+    }//GEN-LAST:event_jButton27ActionPerformed
+
+    private void jPanel9MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jPanel9MouseClicked
+        
+    }//GEN-LAST:event_jPanel9MouseClicked
+
+    private void canvas3dMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_canvas3dMouseClicked
+        if( mouse_state==MOUSE_STATE_WATER_PICK)
+        {
+            mouse_state=MOUSE_STATE_CAMERA;
+            sim.setStopped(true);
+            synchronized(water_pick_sphere)
+            {
+                synchronized(renderer)
+                {
+                    sim.addWaterPoint(water_pick_sphere.getLocalTranslation(), Settings.view_water_pick_sphere_size/2.f, Integer.parseInt(jTextField2.getText()));                    
+                    renderer.removeFromScene(water_pick_sphere);
+                }                
+            }            
+            sim.setStopped(false);
+        }
+    }//GEN-LAST:event_canvas3dMouseClicked
     
     public void addPositionTimer(int action)
     {
@@ -2026,19 +2109,29 @@ public class MainForm extends javax.swing.JFrame {
         
         Action engineUpdate = new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
-                Simulation sim=MainForm.getMainForm().getSimulation();
-                if( sim.isStopped())return;
-                LWJGLCanvas jmeCanvas = ( (LWJGLCanvas) mainform.canvas3d );
-                try
-                {                    
-                    if( sim.getSpeed()!=0)
-                        sim.step();
-                    mainform.canvas3d.repaint();
-                    
-                    mainform.updateInformations();
-                }
-                catch(java.lang.IllegalStateException ex)
+                synchronized(MainForm.getRenderer())
                 {
+                    Simulation sim=MainForm.getMainForm().getSimulation();
+                    if( sim.isStopped())return;
+                    LWJGLCanvas jmeCanvas = ( (LWJGLCanvas) mainform.canvas3d );
+                    try
+                    {                    
+                        if( sim.getSpeed()!=0)
+                            sim.step();
+                        try
+                        {
+                            mainform.canvas3d.repaint();
+                        }
+                        catch(Exception ex)
+                        {
+                            ex.printStackTrace();
+                        }
+
+                        mainform.updateInformations();
+                    }
+                    catch(java.lang.IllegalStateException ex)
+                    {
+                    }
                 }
             }
         };
@@ -2095,6 +2188,7 @@ public class MainForm extends javax.swing.JFrame {
     private javax.swing.JButton jButton24;
     private javax.swing.JButton jButton25;
     private javax.swing.JButton jButton26;
+    private javax.swing.JButton jButton27;
     private javax.swing.JButton jButton28;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton36;

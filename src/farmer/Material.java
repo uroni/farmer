@@ -33,6 +33,8 @@ public class Material implements Positionable, Serializable
     private int scale=5;
     private PointStore ps;
     private PointStore waterps;
+    private List<Vector3f> waterpointlist;
+    private transient Simulation sim;
     
     private static int numMat=0;
     
@@ -41,16 +43,17 @@ public class Material implements Positionable, Serializable
         return  node;
     }
     
-    public Material(Render3D renderer, File file)
+    public Material(Render3D renderer, File file, Simulation sim)
     {
         this.file=file;
-        init(renderer);
+        init(renderer, sim);
     }
     
-    public void init(Render3D renderer)
+    public void init(Render3D renderer, Simulation sim)
     {
         currnum=++numMat;
         this.renderer=renderer;
+        this.sim=sim;
         node=renderer.loadMdl(file.getName());
         setOpacity(opacity);
         node.setLocalScale(new Vector3f(scale,scale,scale));
@@ -154,6 +157,11 @@ public class Material implements Positionable, Serializable
                         queue.add(cp);
                         pointlist.add(cp);
                         points.addPoint(cp, true);
+                        
+                        if( pointlist.size()%10000==0)
+                        {
+                            MainForm.setStatus(pointlist.size()+" Punkte gefunden...");
+                        }
 
                         if( minx==null || cp.x<minx)
                             minx=cp.x;
@@ -171,29 +179,48 @@ public class Material implements Positionable, Serializable
                     }
                 }
             }
+            
+            if( sim.shouldStopOperation() )
+            {
+                break;
+            }
         } 
         
         max.set(new Vector3f(maxx, maxy, maxz));
         min.set(new Vector3f(minx, miny, minz));
     }
     
-    
+    public void setWaterPoint(Vector3f p, float r, byte amount)
+    {
+        ListIterator<Vector3f> it=waterpointlist.listIterator();
+        
+        float rr=r*r;
+        while(it.hasNext())
+        {
+            Vector3f vec=it.next();
+            
+            if( vec.distanceSquared(p)<=rr)
+            {
+                waterps.setPoint(vec, amount);
+            }
+        }
+    }
     
     public void searchWaterPoints(float density)
     {
         density*=Settings.sim_calc_water_density_fac;
         
         Points<Boolean> points=new Points<Boolean>();
-        List<Vector3f> pointlist=new LinkedList<Vector3f>();
+        waterpointlist=new LinkedList<Vector3f>();
         
         Vector3f max=new Vector3f();
         Vector3f min=new Vector3f();
         
-        searchPoints(density, points, pointlist, min, max);
+        searchPoints(density, points, waterpointlist, min, max);
         
-        MainForm.setStatus("Setzte Wert "+Settings.sim_calc_water_default+" für "+pointlist.size()+" Punkte...");
+        MainForm.setStatus("Setzte Wert "+Settings.sim_calc_water_default+" für "+waterpointlist.size()+" Punkte...");
         
-        ListIterator<Vector3f> it=pointlist.listIterator();
+        ListIterator<Vector3f> it=waterpointlist.listIterator();
         
         waterps=new PointStore(min, max, density);
         
@@ -202,7 +229,6 @@ public class Material implements Positionable, Serializable
             Vector3f curr=it.next();
             waterps.setPoint(curr, Settings.sim_calc_water_default);    
         }
-        
         MainForm.setStatus("");
     }
     

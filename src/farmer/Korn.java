@@ -161,6 +161,13 @@ public class Korn implements Positionable, Serializable
         return wurzeln.size();
     }
     
+    public Vector3f getWorldCoordinates(Vector3f in)
+    {
+        Vector3f ret=new Vector3f();
+        model.localToWorld(in, ret);
+        return ret;
+    }
+    
     public void setDisplayRootArrows(boolean b)
     {
         ListIterator<Wurzel> it=wurzeln.listIterator();

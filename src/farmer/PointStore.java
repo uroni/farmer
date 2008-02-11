@@ -27,7 +27,7 @@ public class PointStore implements Serializable
     {
         int xdist2=(int)((max.x-min.x)/dist+0.5f);
         int ydist2=(int)((max.y-min.y)/dist+0.5f);
-        int zdist2=(int)((max.y-min.y)/dist+0.5f);
+        int zdist2=(int)((max.z-min.z)/dist+0.5f);
         store=new byte[xdist2*ydist2*zdist2];
         this.dist=dist;
         this.min=min;
@@ -77,12 +77,17 @@ public class PointStore implements Serializable
     
     public byte getPoint(Vector3f v)
     {
-        if( v.x<max.x && v.y<max.y&&v.z<max.z && v.x>min.x && v.y>min.y && v.z>min.z)
+        if( v.x<=max.x && v.y<=max.y&&v.z<=max.z && v.x>=min.x && v.y>=min.y && v.z>=min.z)
         {
             int idx=getIdx(v);
             if( idx>=store.length || idx<0 )
                 return 0;//throw new java.lang.ArrayIndexOutOfBoundsException();
 
+            if( store[idx]==0)
+            {
+                int bla=4;++bla;
+            }
+                        
             return store[idx];     
         }
         return 0;
