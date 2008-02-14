@@ -25,11 +25,13 @@ public class Korn implements Positionable, Serializable
     private transient Node model;
     private transient Render3D renderer;
     private List<Wurzel> wurzeln=new LinkedList<Wurzel>();
+    private Spross spross;
     private transient int sel_wurzel_idx=-1;
     private Vector3f position=new Vector3f(0,0,0);
     private Vector3f rotation=new Vector3f(0,0,0);;
     private int opacity=100;
     private int scale=3;
+    private float start_time;
     
     private static int kornnum=0;
     private transient int curr_kornnum;
@@ -47,6 +49,8 @@ public class Korn implements Positionable, Serializable
             Wurzel w=new Wurzel("Korn "+curr_kornnum+" Wurzel "+(i+1), renderer, this, sim, false);
             wurzeln.add(w);
         }
+        
+        spross=new Spross("Korn "+curr_kornnum+" Spross", renderer, this, sim, false);
     }
     
     public Node getNode()
@@ -74,13 +78,17 @@ public class Korn implements Positionable, Serializable
             for(int i=0;i<wurzeln.size();++i)
             {
                 Wurzel w=wurzeln.listIterator(i).next();
-                w.init("Korn "+curr_kornnum+" Wurzel "+(i+1), renderer, this, sim, false);
+                w.init("Korn "+curr_kornnum+" Wurzel "+(i+1), renderer, this, sim, false, true);
             }
+            
+            spross.init("Korn "+curr_kornnum+" Spross", renderer, this, sim, false, true);
         }
         
         renderer.addtoScene(model);
         this.setOpacity(opacity);
         setScale(scale);
+        
+        start_time=sim.getSimulatedTime();
     }
     
     public void addWurzel(Vector3f pos, Vector3f dir)
@@ -97,12 +105,31 @@ public class Korn implements Positionable, Serializable
         wurzeln.add(w);
     }
     
+    public void reset()
+    {
+        {
+            for(int i=0;i<wurzeln.size();++i)
+            {
+                Wurzel w=wurzeln.get(i);
+                w.reset();
+            }
+        }
+        spross.reset();
+    }
+    
     public void recalculateGravity()
     {
         for(int i=0;i<wurzeln.size();++i)
         {
             wurzeln.listIterator(i).next().recalculateGravity();
         }
+        if( spross!=null )
+            spross.recalculateGravity();
+    }
+    
+    public float getAge()
+    {
+        return sim.getSimulatedTime()-start_time;
     }
     
     public void setPosition(Vector3f pos)
@@ -134,6 +161,8 @@ public class Korn implements Positionable, Serializable
         {
             wurzeln.get(i).updatePositions();
         }
+        if( spross!=null )
+            spross.updatePositions();
     }
     
     public Vector3f getRotation()
@@ -161,6 +190,11 @@ public class Korn implements Positionable, Serializable
         return wurzeln.size();
     }
     
+    public Spross getSpross()
+    {
+        return spross;
+    }
+    
     public Vector3f getWorldCoordinates(Vector3f in)
     {
         Vector3f ret=new Vector3f();
@@ -177,6 +211,11 @@ public class Korn implements Positionable, Serializable
             Wurzel w=it.next();
             w.setShowArrow(b);
         }
+    }
+    
+    public void setShowSprossArrow(boolean b)
+    {
+        spross.setShowArrow(b);
     }
     
     public String getName()
@@ -251,6 +290,8 @@ public class Korn implements Positionable, Serializable
             if(!b)
                 break;
         }
+        
+        spross.step(time);
     }
     
     public int getScale()

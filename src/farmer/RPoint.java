@@ -6,12 +6,13 @@
 package farmer;
 
 import com.jme.math.Vector3f;
+import java.io.Serializable;
 
 /**
  *
  * @author Martin
  */
-public class RPoint
+public class RPoint implements Serializable
 {
     public float age;
     public Vector3f pos;

@@ -324,7 +324,7 @@ public class Render3D extends JMECanvasImplementor {
         return ret;
     }
     
-    protected void doResize()
+    public void doResize()
     {
         System.out.println("Resizing...");
         resizeCanvas(width, height);

@@ -29,13 +29,18 @@ import java.util.ListIterator;
  */
 public class Wurzel extends GrowableAdapter
 {
-    private transient Vector3f last_intersection_direction;
-    private transient int straigt_timeleft;
+    private Vector3f last_intersection_direction;
+    private int straigt_timeleft;
     private transient  Sphere []circle_nodes;
     
     public Wurzel(String name, Render3D renderer, Korn k, Simulation sim, boolean child)
     {
-        super(name, renderer, k, sim, child);
+        super(name, renderer, k, sim, child, true);
+    }
+    
+    public void init(String name, Render3D renderer, Korn k, Simulation sim, boolean child, boolean load)
+    {
+        super.init(name, renderer, k, sim, child, true, load);
     }
      
     public void updateCircle()
@@ -59,18 +64,24 @@ public class Wurzel extends GrowableAdapter
         }
     }
     
+    public float calculateSpeed(float time)
+    {
+        return time*0.0001f;
+    }
+    
     public boolean step(float time)
     {
         if( first_sim==true)
         {
             first_sim=false;
             curr_position=position;
-            rotation.x-=90;
-            curr_direction=Math3D.getTarget(position, rotation, 1.f);
+            Vector3f crot=rotation.clone();
+            crot.x-=90;
+            curr_direction=Math3D.getTarget(position, crot, 1.f);
             sim_start=sim.getSimulatedTime();
         }
         
-        float max_step=time*0.0001f;
+        float max_step=calculateSpeed(time);
         
         Vector3f target=curr_position.clone();
         

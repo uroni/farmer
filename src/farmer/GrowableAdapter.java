@@ -20,9 +20,12 @@ import com.jme.scene.state.TextureState;
 import com.jme.renderer.ColorRGBA;
 import com.jme.renderer.Renderer;
 import com.jme.scene.state.LightState;
+import com.jme.util.GameTaskQueue;
+import com.jme.util.GameTaskQueueManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.concurrent.Callable;
 
 /**
  *
@@ -33,64 +36,96 @@ public abstract class GrowableAdapter implements Positionable, Serializable
     protected Vector3f position=new Vector3f(0,0,0);
     protected Vector3f rotation=new Vector3f(0,0,0);
     protected float speed=1.f;
-    protected transient boolean showArrow=false;
+    protected boolean showArrow=false;
     protected transient Arrow arrow;
     protected transient Render3D renderer;
     protected transient String name;
     protected transient Korn korn;
-    protected transient RootPoints rp;
-    protected transient Vector3f curr_position,curr_direction;
-    protected transient Vector3f gravity;
+    protected RootPoints rp;
+    protected Vector3f curr_position,curr_direction;
+    protected Vector3f gravity;
     protected transient Simulation sim;
-    protected transient boolean first_sim;
-    protected transient float sim_length;
-    protected transient float sim_start;
-    protected transient float gravity_time;
-    protected transient boolean isChild;
-    protected transient JunctionManager jmgr;
-    protected transient float next_junction_time;
-    protected transient float last_intersection_direction_age;
+    protected boolean first_sim;
+    protected float sim_length;
+    protected float sim_start;
+    protected float gravity_time;
+    protected boolean isChild;
+    protected JunctionManager jmgr;
+    protected float next_junction_time;
+    protected float last_intersection_direction_age;
+    protected boolean root;
     
-    public GrowableAdapter(String name, Render3D renderer, Korn k, Simulation sim, boolean child)
+    public GrowableAdapter(String name, Render3D renderer, Korn k, Simulation sim, boolean child, boolean root)
     {
-        init(name, renderer, k, sim, child);
+        init(name, renderer, k, sim, child, root, false);
     }
     
-    public void init(String name, Render3D renderer, Korn k, Simulation sim, boolean child)
+    public void init(String name, Render3D renderer, Korn k, Simulation sim, boolean child, boolean root, boolean load)
     {
         this.renderer=renderer;
         this.name=name;
         this.sim=sim;
-        this.first_sim=!child;
+        if( !load)
+            this.first_sim=!child;
+        else
+            this.first_sim=false;
         this.isChild=child;
+        this.root=root;
         korn=k;
         
         arrow=new Arrow("arrow", Settings.view_root_arrow_length, Settings.view_root_arrow_width);
         //k.addNode(arrow);
         
-        rp=new RootPoints(sim, renderer, korn);
+        if( !load)
+            rp=new RootPoints(sim, renderer, korn, root);
+        else
+            rp.init(sim, renderer, korn, root, true);
+        
+        if(load )
+        {
+            GameTaskQueueManager.getManager().getQueue(GameTaskQueue.UPDATE).enqueue(new Callable(){
+                public Object call()
+                {
+                    rp.updateAll();
+                    return null;
+                }
+            });
+        }
+        
         k.addNode(rp.getNode());
         
-        curr_position=position.clone();
-        curr_direction=new Vector3f(0,1,0);
+        if(!load)
+        {
+            curr_position=position.clone();
+            curr_direction=new Vector3f(0,1,0);
+            gravity=new Vector3f();
+            last_intersection_direction_age=0;
+            next_junction_time=-1;
+        }
         
-        gravity=new Vector3f();
+        
         setRotation(rotation);
         recalculateGravity();
         //updateCircle();
-        last_intersection_direction_age=0;
+        
         //first_sim=true;
         
-        jmgr=new JunctionManager(renderer, korn, rp);
-        next_junction_time=-1;
-        
-        if( child==true)
-        {
-            sim_start=sim.getSimulatedTime();
-            gravity_time=sim_start+Settings.sim_root_junction_no_gravity_time;
-        }
+        if( !load)
+            jmgr=new JunctionManager(renderer, korn, rp);
         else
-            gravity_time=sim.getSimulatedTime();
+            jmgr.init(renderer, korn, rp);
+        
+        
+        if( !load)
+        {
+            if( child==true)
+            {
+                sim_start=sim.getSimulatedTime();
+                gravity_time=sim_start+Settings.sim_root_junction_no_gravity_time;
+            }
+            else
+                gravity_time=sim.getSimulatedTime();
+        }
     }
     
     public void setCurrDirection(Vector3f dir)
@@ -106,6 +141,14 @@ public abstract class GrowableAdapter implements Positionable, Serializable
     public String getName()
     {
         return name;
+    }
+    
+    public void reset()
+    {
+        first_sim=true;
+        rp.reset();
+        sim_start=sim.getSimulatedTime();
+        sim_length=0;
     }
     
     public int getReversed()

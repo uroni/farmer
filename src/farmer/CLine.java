@@ -10,20 +10,36 @@ import java.nio.*;
 import com.jme.scene.Line;
 import com.jme.math.Vector3f;
 import com.jme.scene.Spatial;
+import java.io.Serializable;
 
 /**
  *
  * @author urpc
  */
-public class CLine
+public class CLine implements Serializable
 {
     private FloatBuffer points;
-    private Line line;
+    private transient Line line;
     
     public CLine()
     {
+        init();
+    }
+    
+    public void init()
+    {
         line=new Line("CLine");
         line.setMode(Line.CONNECTED);
+    }
+    
+    public void reset()
+    {
+        if(points!=null)
+        {
+            points.clear();
+            line.reconstruct(points, null, null, null);
+            line.updateRenderState();
+        }
     }
     
     public void addPoint(Vector3f vec)

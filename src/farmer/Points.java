@@ -16,36 +16,45 @@ public class Points<T>
 {
     private Map<Float, Map<Float, Map<Float, T> > > map=new TreeMap<Float, Map<Float, Map<Float, T> > >();
     
+    
+    public static float roundP(float in)
+    {
+        in*=Settings.sys_pointstore_precicion;
+        in=(float)Math.round(in);
+        in/=Settings.sys_pointstore_precicion;
+        return in;
+    }
+    
     void addPoint(Vector3f p, T t)
     {
-       Map<Float, Map<Float, T> > val1=map.get(p.x);
+       Map<Float, Map<Float, T> > val1=map.get(roundP(p.x));
        if( val1==null )
        {
            TreeMap m2=new TreeMap<Float, T>();
-           m2.put(p.z, t);
+           m2.put(roundP(p.z), t);
            TreeMap m1=new TreeMap<Float, Map<Float, T> >();
-           m1.put(p.y, m2);           
-           map.put(p.x, m1);
+           m1.put(roundP(p.y), m2);           
+           map.put(roundP(p.x), m1);
        }
        else
        {
-           Map<Float, T> val2=val1.get(p.y);
+           Map<Float, T> val2=val1.get(roundP(p.y));
            
            if( val2==null)
            {
                TreeMap m2=new TreeMap<Float, T>();
-               m2.put(p.z, t);
-               val1.put(p.y, m2);
+               m2.put(roundP(p.z), t);
+               val1.put(roundP(p.y), m2);
            }
            else
            {
-               if( val2.containsKey(p.z))
+               if( val2.containsKey(roundP(p.z)))
                {
                    return;
                }
                else
                {
-                   val2.put(p.z, t);
+                   val2.put(roundP(p.z), t);
                }
            }
        }
@@ -53,13 +62,13 @@ public class Points<T>
     
     public T getPointData(Vector3f p)
     {
-        Map<Float, Map<Float, T> > val1=map.get(p.x);
+        Map<Float, Map<Float, T> > val1=map.get(roundP(p.x));
         if( val1!=null )
         {
-            Map<Float, T> val2=val1.get(p.y);
+            Map<Float, T> val2=val1.get(roundP(p.y));
             if( val2!=null)
             {
-                return val2.get(p.z);
+                return val2.get(roundP(p.z));
             }
         }
         return null;
@@ -67,13 +76,13 @@ public class Points<T>
     
     public boolean containsPoint(Vector3f p)
     {
-        Map<Float, Map<Float, T> > val1=map.get(p.x);
+        Map<Float, Map<Float, T> > val1=map.get(roundP(p.x));
         if( val1!=null )
         {
-            Map<Float, T> val2=val1.get(p.y);
+            Map<Float, T> val2=val1.get(roundP(p.y));
             if( val2!=null)
             {
-                return val2.containsKey(p.z);
+                return val2.containsKey(roundP(p.z));
             }
         }
         return false;
@@ -81,10 +90,10 @@ public class Points<T>
     
     public void removePoint(Vector3f p)
     {
-        Map<Float, Map<Float, T> > val1=map.get(p.x);
+        Map<Float, Map<Float, T> > val1=map.get(roundP(p.x));
         if( val1!=null )
         {
-            Map<Float, T> val2=val1.get(p.y);
+            Map<Float, T> val2=val1.get(roundP(p.y));
             if( val2!=null)
             {
                 val2.remove(p.z);

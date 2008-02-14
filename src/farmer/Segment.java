@@ -19,6 +19,7 @@ import com.jme.scene.shape.Sphere;
 import com.jme.scene.state.LightState;
 import com.jme.scene.state.MaterialState;
 import com.jme.util.geom.BufferUtils;
+import java.io.Serializable;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
@@ -30,34 +31,38 @@ import java.util.ListIterator;
  *
  * @author Martin
  */
-public class Segment
+public class Segment implements Serializable
 {
-    private List<RPoint> points;
-    private Render3D renderer;
+    private List<RPoint> points=new LinkedList<RPoint>();
+    private transient Render3D renderer;
     private float size;
-    private TriMesh trimesh;
-    private boolean inscene=false;
-    private boolean use_detail;
-    private Simulation simulation;
+    private transient TriMesh trimesh;
+    private boolean inscene;
+    private transient boolean use_detail;
+    private transient Simulation simulation;
     private boolean collidable;
-    private Segment previous;
+    private transient Segment previous;
     private Vector3f last_rotation=new Vector3f(0,0,0);
     private static int number=1;
+    private boolean root;
+    private transient Korn korn;
     
-    public Segment(Render3D renderer, boolean use_detail, Simulation sim, Segment previous)
+    public Segment(Render3D renderer, boolean use_detail, Simulation sim, Segment previous, Korn k, boolean root)
     {
         
-        init(renderer, use_detail, sim, previous);
+        init(renderer, use_detail, sim, previous, k, root);
     }
     
-    public void init(Render3D renderer, boolean use_detail, Simulation sim, Segment previous)
+    public void init(Render3D renderer, boolean use_detail, Simulation sim, Segment previous, Korn k, boolean root)
     {
-        points=new LinkedList<RPoint>();
         this.renderer=renderer;
         this.previous=previous;
         trimesh=new TriMesh("test"+number++);
         this.use_detail=use_detail;
+        this.root=root;
+        this.korn=k;
         simulation=sim;
+        inscene=false;
         //trimesh.setLightCombineMode(LightState.OFF);
     }
     
@@ -97,6 +102,17 @@ public class Segment
         return 0.f;
     }
     
+    public void remove()
+    {
+        points.clear();
+        if( collidable)
+        {
+            renderer.removeFromSceneCol(trimesh);
+        }
+        else
+            renderer.removeFromScene(trimesh);
+    }
+    
     public void add(RPoint p)
     {
         if( points.size()>0)
@@ -122,7 +138,10 @@ public class Segment
     
     private float calculateRadius(RPoint p)
     {
-        return Settings.sim_root_thikness*FastMath.log((simulation.getSimulatedTime()-p.age)*Settings.sim_root_pointness+1);
+        if( root)
+            return Settings.sim_root_thikness*FastMath.log((simulation.getSimulatedTime()-p.age)*Settings.sim_root_pointness+1);
+        else
+            return Settings.sim_spross_thikness*FastMath.log((simulation.getSimulatedTime()-p.age)*Settings.sim_spross_pointness+1);
     }
     
     private void addBall(Vector3f pos)
@@ -413,6 +432,7 @@ public class Segment
                 renderer.addtoScene(trimesh);
                 inscene=true;
             }
+            
             float [] vertices=new float[points.size()*Settings.sim_root_circle_segments*3];
             float [] normals=new float[vertices.length];
             int [] indexes=new int[(points.size()-1)*Settings.sim_root_circle_segments*2*3];
@@ -485,7 +505,7 @@ public class Segment
         return trimesh;
     }
     
-    public ColorRGBA calculateColor()
+    public ColorRGBA calculateColorRoot()
     {
         float age=getAge();
         
@@ -517,6 +537,55 @@ public class Segment
         {
             float m=(float)(Settings.view_root_color_green_end-Settings.view_root_color_green_start)/Settings.view_root_end_age;
             float c=(float)Settings.view_root_color_green_start;
+            
+            color.g=ByteColorToFloat(m*age+c);
+        }
+        
+        color.a=1.f;
+        
+        return color;
+    }
+    
+    public ColorRGBA calculateColor()
+    {
+        if( root) 
+            return this.calculateColorRoot();
+        else
+            return this.calculateColorSpross();
+    }
+    
+    public ColorRGBA calculateColorSpross()
+    {
+        float age=korn.getAge();
+        
+        ColorRGBA color=new ColorRGBA();
+        
+        if( age>=Settings.view_spross_end_age)
+        {
+            color.a=1.f;
+            color.b=ByteColorToFloat(Settings.view_spross_color_blue_end);
+            color.r=ByteColorToFloat(Settings.view_spross_color_red_end);
+            color.g=ByteColorToFloat(Settings.view_spross_color_green_end);
+            return color;
+        }
+        
+        {
+            float m=(float)(Settings.view_spross_color_blue_end-Settings.view_spross_color_blue_start)/Settings.view_spross_end_age;
+            float c=(float)Settings.view_spross_color_blue_start;
+            
+            color.b=ByteColorToFloat(m*age+c);
+        }
+        
+        {
+            float m=(float)(Settings.view_spross_color_red_end-Settings.view_spross_color_red_start)/Settings.view_spross_end_age;
+            float c=(float)Settings.view_spross_color_red_start;
+            
+            color.r=ByteColorToFloat(m*age+c);
+        }
+        
+        {
+            float m=(float)(Settings.view_spross_color_green_end-Settings.view_spross_color_green_start)/Settings.view_spross_end_age;
+            float c=(float)Settings.view_spross_color_green_start;
             
             color.g=ByteColorToFloat(m*age+c);
         }

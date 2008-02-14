@@ -32,9 +32,10 @@ public class Material implements Positionable, Serializable
     private File file;
     private int scale=5;
     private PointStore ps;
-    private PointStore waterps;
+    private PointStoreFloat waterps;
     private List<Vector3f> waterpointlist;
     private transient Simulation sim;
+    private float waterdist;
     
     private static int numMat=0;
     
@@ -190,7 +191,7 @@ public class Material implements Positionable, Serializable
         min.set(new Vector3f(minx, miny, minz));
     }
     
-    public void setWaterPoint(Vector3f p, float r, byte amount)
+    public void setWaterPoint(Vector3f p, float r, float amount)
     {
         ListIterator<Vector3f> it=waterpointlist.listIterator();
         
@@ -222,20 +223,32 @@ public class Material implements Positionable, Serializable
         
         ListIterator<Vector3f> it=waterpointlist.listIterator();
         
-        waterps=new PointStore(min, max, density);
+        waterps=new PointStoreFloat(min, max, density);
         
         while(it.hasNext())
         {
             Vector3f curr=it.next();
-            waterps.setPoint(curr, Settings.sim_calc_water_default);    
+            waterps.setPoint(curr, Settings.sim_calc_water_default);     
         }
         MainForm.setStatus("");
+        
+        waterdist=density;
     }
     
     public byte getWater(Vector3f point)
     {
         if( waterps!=null )
-            return waterps.getPoint(point);
+        {
+            float r=waterps.getPoint(point);
+            if(r==-1)
+                return 0;
+            else
+            {
+                byte b=(byte)(r*255.f-128.f);
+                if(b==0)++b;
+                return b;
+            }
+        }
         else
             return 0;
     }
@@ -421,5 +434,118 @@ public class Material implements Positionable, Serializable
     {
         scale=s;
         node.setLocalScale(new Vector3f(s,s,s));
+    }
+    
+    public void step(float time)
+    {
+        if(waterpointlist!=null)
+        {
+            ListIterator<Vector3f> it=waterpointlist.listIterator();
+            
+            while(it.hasNext())
+            {
+                Vector3f vec=it.next();
+                
+                float a=waterps.getPoint(vec);
+                if( a==-1)
+                    continue;
+                
+                Vector3f []pts=Math3D.getSurroundingPoints(vec, waterdist);
+                for(int i=0;i<pts.length;++i)
+                {
+                    float b=waterps.getPoint(pts[i]);
+                    if(b==-1) continue;
+                    float diff=Math.abs(a-b);
+                    float ex=Settings.sim_calc_water_cappilaric*time*diff;
+                    if( ex>Settings.sim_calc_water_cappilaric_min*time)
+                    {
+                        if( a>b && a-ex>=0.f && b+ex<=1.f)
+                        {
+                            a-=ex;
+                            b+=ex;
+                        }
+                        else if( a<b && a+ex<=1.f && b-ex>=0.f)
+                        {
+                            a+=ex;
+                            b-=ex;
+                        }
+                        waterps.setPoint(pts[i], b);
+                    }
+                }
+                
+                waterps.setPoint(vec, a);
+            }
+        }
+    }
+    
+    public float getWaterSum()
+    {
+        if( waterpointlist!=null)
+        {
+            ListIterator<Vector3f> it=waterpointlist.listIterator();
+            
+            float sum=0.f;
+            while(it.hasNext())
+            {
+                float r=waterps.getPoint(it.next());
+                if( r!=-1)
+                    sum+=r;
+            }
+            
+            return sum;
+        }
+        return -1;
+    }
+    
+    public void addWaterTop(float amount)
+    {
+        if( waterpointlist!=null)
+        {
+            /*{
+                ListIterator<Vector3f> it=waterpointlist.listIterator();
+                List<Float> data=new LinkedList<Float>();
+                
+                while(it.hasNext())
+                {
+                    Vector3f p=it.next();
+                    float f=(float)Math.random();
+                    data.add(f);
+                    waterps.setPoint(p, f);
+                }
+                
+                it=waterpointlist.listIterator();
+                ListIterator<Float> it2=data.listIterator();
+                while(it.hasNext())
+                {
+                    Vector3f p=it.next();
+                    float f=it2.next();
+                    
+                    float r;
+                    if( (r=waterps.getPoint(p))!=f)
+                    {
+                        if( r==-1)
+                        {
+                            System.out.println("point not found...");
+                        }
+                        System.out.println("Test failed at "+p);
+                    }
+                }
+            }*/
+            
+            
+            Vector3f min=waterps.getMin();
+            
+            ListIterator<Vector3f> it=waterpointlist.listIterator();
+            
+            while(it.hasNext())
+            {
+                Vector3f p=it.next();
+                
+                if( Points.roundP(p.y)==Points.roundP(min.y) )
+                {
+                    waterps.setPoint(p, amount);
+                }
+            }
+        }        
     }
 }

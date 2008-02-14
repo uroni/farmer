@@ -27,9 +27,10 @@ public class Simulation implements Serializable
     public transient Object point_mutex;    
     private boolean stopped=false;
     private transient float speed;
-    private transient long lastsimtime;
-    private transient float simulatedtime;
+    private long lastsimtime;
+    private float simulatedtime;
     private transient boolean stop_current_operation;
+    private int simulation_steps;
     
     public Simulation(Render3D renderer, MainForm form)
     {
@@ -86,8 +87,10 @@ public class Simulation implements Serializable
         {
             CameraRotation cam=(CameraRotation)camera;
             cam.init(renderer.getCamera(), renderer);
+            renderer.setCamera(camera);
         }
-        renderer.setCamera(camera);
+        
+        speed=0;
     }
     
     public synchronized void stopCurrentOperation()
@@ -288,12 +291,13 @@ public class Simulation implements Serializable
     public void addWaterPoint(Vector3f p, float r, int amount)
     {
         ListIterator<Material> it=materials.listIterator();
-        byte ramount=(byte)(amount-128);
-        if( ramount==0)--ramount;
+        float a=(1.f/255.f)*amount;
+        if(a>1.f)
+            a=1.f;
         while(it.hasNext())
         {
             Material m=it.next();
-            m.setWaterPoint(p,r, ramount);
+            m.setWaterPoint(p,r, a);
         }
     }
     
@@ -318,12 +322,33 @@ public class Simulation implements Serializable
         return density;
     }
     
+    public void addWaterTop(int amount)
+    {
+        float famount=(1.f/255.f)*(float)amount;
+        ListIterator<Material> it=materials.listIterator();
+        while(it.hasNext())
+        {
+            it.next().addWaterTop(famount);
+        }
+    }
+    
+    public float getWaterPointSum()
+    {
+        float sum=0.f;
+        ListIterator<Material> it=materials.listIterator();
+        while(it.hasNext())
+        {
+            sum+=it.next().getWaterSum();
+        }
+        return sum;
+    }
+    
     public float getSimulatedTime()
     {
         return simulatedtime;
     }
     
-    public void step()
+    public synchronized void step()
     {
         if( lastsimtime==0 )
         {
@@ -344,7 +369,31 @@ public class Simulation implements Serializable
             k.step(timeleft);
         }
         
+        if( simulation_steps % Settings.sys_water_sim_gab==0)
+        {
+            ListIterator<Material> it=materials.listIterator();
+            while(it.hasNext())
+            {
+                it.next().step(timeleft);
+            }
+            
+            //System.out.println("Waterpointsum: "+this.getWaterPointSum());
+        }
+        
+        ++simulation_steps;
+        
         lastsimtime=System.currentTimeMillis();
+    }
+    
+    public void reset()
+    {
+        simulatedtime=0;
+        ListIterator<Korn> it=corns.listIterator();
+        while(it.hasNext())
+        {
+           Korn k=it.next();
+           k.reset();
+        }        
     }
     
     public synchronized void setStopped(boolean b)

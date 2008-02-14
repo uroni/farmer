@@ -7,6 +7,7 @@ package farmer;
 
 import com.jme.math.Vector3f;
 import com.jme.scene.Spatial;
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -15,27 +16,55 @@ import java.util.ListIterator;
  *
  * @author Martin
  */
-public class RootPoints
+public class RootPoints implements Serializable
 {
-    Simulation sim;
-    Render3D renderer;
+    private transient Simulation sim;
+    private transient Render3D renderer;
     List<RPoint> points=new LinkedList<RPoint>();
     CLine line=new CLine();
     Segment spitze;
     List<Segment> segments=new LinkedList<Segment>();
-    private Korn korn;
-    int draw_mode=DRAW_LINE;
+    private transient Korn korn;
+    private transient int draw_mode=DRAW_LINE;
     public static int DRAW_LINE=0;
+    
+    private boolean root;
     
     private float stage1_updatetime,stage2_updatetime,stage3_updatetime,stage4_updatetime,stage5_updatetime,stage6_updatetime;
     
     
-    public RootPoints(Simulation sim, Render3D renderer, Korn korn)
+    public RootPoints(Simulation sim, Render3D renderer, Korn korn, boolean root)
+    {
+        init(sim, renderer, korn, root, false);
+        spitze=new Segment(renderer, true, sim, null, korn, root);
+    }
+    
+    public void init(Simulation sim, Render3D renderer, Korn korn, boolean root, boolean load)
     {
         this.sim=sim;
         this.renderer=renderer;
-        spitze=new Segment(renderer, true, sim, null);
+        this.root=root;
         this.korn=korn;
+        
+        if(load)
+        {
+            Segment last=null;
+            ListIterator<Segment> it=segments.listIterator();
+            
+            while(it.hasNext())
+            {
+                Segment s=it.next();
+                s.init(renderer, false, sim, last, korn, root);
+                last=s;
+                
+                if( it.hasNext())
+                {
+                   s.addCollidable();
+                }
+            }
+            
+            spitze.init(renderer, true, sim, last, korn, root);
+        }
     }
     
     private void updateSegments(float barrier)
@@ -61,6 +90,24 @@ public class RootPoints
         }
     }
     
+    public void reset()
+    {
+        points.clear();
+        if(line!=null)
+            line.reset();
+        ListIterator<Segment> it=segments.listIterator();
+        while(it.hasNext())
+        {
+            it.next().remove();
+        }
+        if(spitze!=null)
+        {
+            spitze.remove();
+            spitze=new Segment(renderer, true, sim, null, korn, root);
+        }
+        segments.clear();
+    }
+    
     public void addPoint(Vector3f pos)
     {
         RPoint p=new RPoint();
@@ -84,7 +131,7 @@ public class RootPoints
                     segments.get(segments.size()-1).addCollidable();
                 }
                 segments.add(spitze);
-                spitze=new Segment(renderer, true, sim, spitze);
+                spitze=new Segment(renderer, true, sim, spitze,korn, root);
                 spitze.add(p);
                 spitze.update();
             } 
@@ -135,6 +182,8 @@ public class RootPoints
         {
             it.next().update();
         }
+        
+        spitze.update();
     }
     
     public Vector3f getPointPos(int idx)

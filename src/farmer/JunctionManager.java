@@ -7,6 +7,7 @@ package farmer;
 
 import com.jme.math.FastMath;
 import com.jme.math.Vector3f;
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -15,19 +16,24 @@ import java.util.ListIterator;
  *
  * @author Martin
  */
-class Junc
+class Junc implements Serializable
 {
     int curr;
 }
 
-public class JunctionManager
+public class JunctionManager implements Serializable
 {
     private List<Junc> junctions=new LinkedList<Junc>();
-    private Render3D renderer;
-    private Korn korn;
-    private RootPoints rpoints;
+    private transient Render3D renderer;
+    private transient Korn korn;
+    private transient RootPoints rpoints;
     
     public JunctionManager(Render3D renderer, Korn k, RootPoints rpoints)
+    {
+        init(renderer, k, rpoints);
+    }
+    
+    public void init(Render3D renderer, Korn k, RootPoints rpoints)
     {
         this.renderer=renderer;
         korn=k;
@@ -59,7 +65,7 @@ public class JunctionManager
             
             junctions.add(j);*/
             
-            System.out.println("Added potential Junction point");
+            //System.out.println("Added potential Junction point");
             
             Junc j=new Junc();
             

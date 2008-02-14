@@ -270,10 +270,6 @@ public class MainForm extends javax.swing.JFrame {
         jMenuItem1 = new javax.swing.JMenuItem();
         jMenuItem3 = new javax.swing.JMenuItem();
         jSeparator2 = new javax.swing.JSeparator();
-        jMenu6 = new javax.swing.JMenu();
-        jMenuItem10 = new javax.swing.JMenuItem();
-        jMenuItem11 = new javax.swing.JMenuItem();
-        jMenuItem12 = new javax.swing.JMenuItem();
         jMenu2 = new javax.swing.JMenu();
         jMenu3 = new javax.swing.JMenu();
         jMenuItem4 = new javax.swing.JMenuItem();
@@ -1268,6 +1264,11 @@ public class MainForm extends javax.swing.JFrame {
         jMenu1.setText("Simulation");
 
         jMenuItem2.setText("Neu");
+        jMenuItem2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem2ActionPerformed(evt);
+            }
+        });
         jMenu1.add(jMenuItem2);
         jMenu1.add(jSeparator1);
 
@@ -1287,19 +1288,6 @@ public class MainForm extends javax.swing.JFrame {
         });
         jMenu1.add(jMenuItem3);
         jMenu1.add(jSeparator2);
-
-        jMenu6.setText("Einstellungen");
-
-        jMenuItem10.setText("Laden");
-        jMenu6.add(jMenuItem10);
-
-        jMenuItem11.setText("Speichern");
-        jMenu6.add(jMenuItem11);
-
-        jMenuItem12.setText("Ändern");
-        jMenu6.add(jMenuItem12);
-
-        jMenu1.add(jMenu6);
 
         jMenuBar1.add(jMenu1);
 
@@ -1482,6 +1470,7 @@ public class MainForm extends javax.swing.JFrame {
             curr_korn=k;
         
         curr_korn.setDisplayRootArrows(true);
+        curr_korn.setShowSprossArrow(true);
         pc.addPositionable(curr_korn);
         
         for(int i=0;i<curr_korn.getWurzelCount();++i)
@@ -1489,6 +1478,7 @@ public class MainForm extends javax.swing.JFrame {
             curr_korn.selectWurzel(i);
             pc.addPositionable(curr_korn.getSelected());
         }       
+        pc.addPositionable(curr_korn.getSpross());
         updatePositionSelectBox();
         return curr_korn;
     }
@@ -1917,7 +1907,10 @@ public class MainForm extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton25ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton25ActionPerformed
-        // TODO add your handling code here:
+        if( sim.isStopped())return;
+        sim.setStopped(true);
+        sim.reset();
+        sim.setStopped(false);
     }//GEN-LAST:event_jButton25ActionPerformed
 
     private void jButton10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton10ActionPerformed
@@ -1926,7 +1919,9 @@ public class MainForm extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton10ActionPerformed
 
     private void jButton23ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton23ActionPerformed
-        
+        sim.setStopped(true);
+        sim.addWaterTop(Integer.parseInt(jTextField2.getText()));
+        sim.setStopped(false);
     }//GEN-LAST:event_jButton23ActionPerformed
 
     private void jButton22ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton22ActionPerformed
@@ -2015,13 +2010,23 @@ public class MainForm extends javax.swing.JFrame {
             {
                 synchronized(renderer)
                 {
+                    sim.setStopped(true);
                     sim.addWaterPoint(water_pick_sphere.getLocalTranslation(), Settings.view_water_pick_sphere_size/2.f, Integer.parseInt(jTextField2.getText()));                    
                     renderer.removeFromScene(water_pick_sphere);
+                    sim.setStopped(false);
                 }                
             }            
             sim.setStopped(false);
         }
     }//GEN-LAST:event_canvas3dMouseClicked
+
+    private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
+        if( sim.isStopped())return;
+        sim.setStopped(true);
+        sim=new Simulation(renderer, this);
+        renderer.newRootNode();
+        sim.setStopped(false);
+    }//GEN-LAST:event_jMenuItem2ActionPerformed
     
     public void addPositionTimer(int action)
     {
@@ -2235,12 +2240,8 @@ public class MainForm extends javax.swing.JFrame {
     private javax.swing.JMenu jMenu3;
     private javax.swing.JMenu jMenu4;
     private javax.swing.JMenu jMenu5;
-    private javax.swing.JMenu jMenu6;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenuItem jMenuItem1;
-    private javax.swing.JMenuItem jMenuItem10;
-    private javax.swing.JMenuItem jMenuItem11;
-    private javax.swing.JMenuItem jMenuItem12;
     private javax.swing.JMenuItem jMenuItem13;
     private javax.swing.JMenuItem jMenuItem14;
     private javax.swing.JMenuItem jMenuItem15;

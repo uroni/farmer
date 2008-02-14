@@ -28,7 +28,7 @@ public class Settings implements Serializable
     public static float camera_min_view_distance=10.f;
     public static float view_root_arrow_length=0.4f;
     public static float view_root_arrow_width=0.04f;
-    public static int sim_corn_init_root_count=2;
+    public static int sim_corn_init_root_count=3;
     public static float ctrl_corn_pos_step=0.1f;
     public static float ctrl_corn_rot_step=0.6f;
     public static float ctrl_root_pos_step=0.02f;
@@ -116,10 +116,27 @@ public class Settings implements Serializable
     public static float sim_root_junction_no_gravity_time=100.f;
     public static float sim_root_junction_col_check_distance=1.f;
     public static float sim_calc_water_density_fac=2.f;
-    public static byte sim_calc_water_default=1;
+    public static float sim_calc_water_default=0.f;
     public static float view_water_pick_sphere_size=10.f;
     public static boolean sim_calc_pointsearch_test_center=false;
     public static int sim_calc_density_random_percent=100;
     public static boolean sim_calc_density_stronger_interpolation=false;
     public static float sim_root_junction_interpolation_age=3000.f;
+    public static float sim_spross_gravity_influence1=800.f;
+    public static float sim_spross_gravity_influence2=0.03125f;
+    public static float sim_spross_gravity_max=2.f;
+    public static float sim_spross_gravity_k=0.05f;
+    public static float sim_spross_thikness=0.01f;
+    public static float sim_spross_pointness=0.1f;
+    public static int view_spross_color_green_start=255;
+    public static int view_spross_color_red_start=255;
+    public static int view_spross_color_blue_start=255;
+    public static int view_spross_color_green_end=160;
+    public static int view_spross_color_red_end=0;
+    public static int view_spross_color_blue_end=26;
+    public static float view_spross_end_age=100000.f;
+    public static float sim_calc_water_cappilaric=0.0001f;
+    public static float sim_calc_water_cappilaric_min=0.000003f;
+    public static int sys_water_sim_gab=10;
+    public static float sys_pointstore_precicion=10000.f;
 }
