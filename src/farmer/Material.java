@@ -127,6 +127,15 @@ public class Material implements Positionable, Serializable
             return 0;
     }
     
+    public boolean materialPointExists(Vector3f p)
+    {
+        if( ps!=null)
+        {
+            return ps.isSet(p);
+        }
+        return false;
+    }
+    
     public void searchPoints(float density, Points<Boolean> points, List<Vector3f>pointlist, Vector3f min, Vector3f max)
     {
         Vector3f center=node.getWorldBound().getCenter(); 

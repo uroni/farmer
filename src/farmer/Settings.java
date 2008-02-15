@@ -155,4 +155,6 @@ public class Settings implements Serializable
     public static boolean sim_spross_light=true;
     public static float sim_root_water_consumtion_mult=5.0f;
     public static boolean sim_root_water_simulate=false;
+    public static float sim_root_dietime_min=100000.f;
+    public static float sim_root_dietime_max=300000.f;
 }

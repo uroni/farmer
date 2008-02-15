@@ -290,14 +290,18 @@ public class Simulation implements Serializable
     
     public float getWaterAmountF(Vector3f p)
     {
-        float ret=0;
+        float ret=-1;
         ListIterator<Material> it=materials.listIterator();
         while(it.hasNext())
         {
             Material m=it.next();
             float r=m.getWaterF(p);
             if( r!=-1)
+            {
+                if( ret==-1)
+                    ret=0;
                 ret+=r;
+            }
         }
         
         return ret;
@@ -346,6 +350,18 @@ public class Simulation implements Serializable
         }
         
         return density;
+    }
+    
+    public boolean isMaterialPoint(Vector3f p)
+    {
+        ListIterator<Material> it=materials.listIterator();
+        while(it.hasNext())
+        {
+            Material m=it.next();
+            if( m.materialPointExists(p))
+                return true;
+        }
+        return false;
     }
     
     public void addWaterTop(int amount)

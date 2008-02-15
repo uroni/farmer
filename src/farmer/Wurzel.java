@@ -32,6 +32,8 @@ public class Wurzel extends GrowableAdapter
     private Vector3f last_intersection_direction;
     private int straigt_timeleft;
     private transient  Sphere []circle_nodes;
+    private float die_time=-1;
+    private boolean died=false;
     
     public Wurzel(String name, Render3D renderer, Korn k, Simulation sim, boolean child)
     {
@@ -120,6 +122,9 @@ public class Wurzel extends GrowableAdapter
                 curr_direction=cpos2o.subtractLocal(cposo);
             }
         }
+        
+        if(died)
+            return true;
         
         float max_step=calculateSpeed(time);
         
@@ -428,6 +433,16 @@ public class Wurzel extends GrowableAdapter
         
         if( Settings.sim_root_water_simulate)
             rp.step(time);
+        
+        if( die_time!=-1 && sim.getSimulatedTime()>die_time)
+        {
+            died=true;
+        }
+        boolean wa=sim.isMaterialPoint(this.worldVector(curr_position));
+        if( wa==false && die_time==-1)
+            die_time=sim.getSimulatedTime()+(float)Math.random()*(Settings.sim_root_dietime_max-Settings.sim_root_dietime_min)+Settings.sim_root_dietime_min;
+        else if(wa==true && die_time!=-1)
+            die_time=-1;
         
         if( makeJunctions()==true )
             return false;
