@@ -66,7 +66,31 @@ public class Wurzel extends GrowableAdapter
     
     public float calculateSpeed(float time)
     {
-        return time*0.0001f;
+        float local_speed=FastMath.exp(Settings.sim_root_speed_func_spread*(getAge()-Settings.sim_root_speed_day_max)*(getAge()-Settings.sim_root_speed_day_max));
+        local_speed+=Settings.sim_root_speed_min;
+        local_speed*=Settings.sim_root_max_speed*time;
+        local_speed*=Settings.sim_root_initial_speed*FastMath.pow(2, Settings.sim_root_speed_rgt*Settings.sim_temperature);
+        local_speed*=Settings.sim_fertilitation;
+        local_speed*=Settings.sim_root_speed_mult;
+        
+        
+        if( Settings.sim_root_water_simulate)
+        {
+            float water=korn.getWater();
+
+            if( water<Settings.sim_corn_water_critical)
+            {
+                float pc=water*1.f/Settings.sim_corn_water_critical;
+                local_speed*=pc;
+            }
+
+
+            water-=local_speed*Settings.sim_root_water_consumtion_mult;
+            if(water>=0)
+                korn.setWater(water);
+        }
+        
+        return local_speed;       
     }
     
     public boolean step(float time)
@@ -74,11 +98,27 @@ public class Wurzel extends GrowableAdapter
         if( first_sim==true)
         {
             first_sim=false;
-            curr_position=position;
-            Vector3f crot=rotation.clone();
-            crot.x-=90;
-            curr_direction=Math3D.getTarget(position, crot, 1.f);
             sim_start=sim.getSimulatedTime();
+            if( renderer.isInScene(arrow))
+            {            
+                /*curr_position=position;
+                Vector3f crot=rotation.clone();
+            
+                curr_direction=Math3D.getTarget2(position, crot, 1.f);
+                sim_start=sim.getSimulatedTime();*/
+                
+                curr_position=position.clone();
+                Vector3f cpos=curr_position.clone();
+                cpos.y-=1;
+                Vector3f cposo=new Vector3f(),cpos2o=new Vector3f();
+                Vector3f rr=rotation.clone();
+                rr.x+=180;
+                Math3D.setRotation(arrow, rr);
+                arrow.localToWorld(curr_position, cposo);
+                arrow.localToWorld(cpos, cpos2o);
+                Math3D.setRotation(arrow, rotation);
+                curr_direction=cpos2o.subtractLocal(cposo);
+            }
         }
         
         float max_step=calculateSpeed(time);
@@ -385,6 +425,9 @@ public class Wurzel extends GrowableAdapter
                 jmgr.addPoint(time, -2);
             }
         }
+        
+        if( Settings.sim_root_water_simulate)
+            rp.step(time);
         
         if( makeJunctions()==true )
             return false;

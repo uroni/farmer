@@ -21,6 +21,7 @@ public class RootPoints implements Serializable
     private transient Simulation sim;
     private transient Render3D renderer;
     List<RPoint> points=new LinkedList<RPoint>();
+    List<RPoint> waterpoints=new LinkedList<RPoint>();
     CLine line=new CLine();
     Segment spitze;
     List<Segment> segments=new LinkedList<Segment>();
@@ -172,6 +173,16 @@ public class RootPoints implements Serializable
             }
         }   
         
+        if( waterpoints.size()>0)
+        {
+            if( waterpoints.get(waterpoints.size()-1).pos.distanceSquared(pos)>Settings.sim_corn_water_distance_squared)
+            {
+                waterpoints.add(p);
+            }
+        }
+        else
+            waterpoints.add(p);
+        
     }
     
     public void updateAll()
@@ -303,5 +314,26 @@ public class RootPoints implements Serializable
     public int getSize()
     {
         return points.size();
+    }
+    
+    public void step(float time)
+    {
+        ListIterator<RPoint> it=waterpoints.listIterator();
+        
+        while(it.hasNext())
+        {
+            RPoint p=it.next();
+            
+            float r=Segment.calculateRadius(p, root, sim);
+            
+            float water=sim.getWaterAmountF(p.pos);
+            
+            float a=r*time*Settings.sim_corn_water_consum_mult;
+            water-=a;
+            
+            sim.setWaterAmountF(p.pos, water);
+            
+            korn.setWater(korn.getWater()+a);
+        }
     }
 }

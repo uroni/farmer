@@ -28,15 +28,38 @@ public class Spross extends GrowableAdapter
     {
         if( first_sim==true)
         {
-            first_sim=false;
+           /*first_sim=false;
             curr_position=position;
             Vector3f crot=rotation.clone();
             crot.x-=90;
             curr_direction=Math3D.getTarget(position, crot, 1.f);
+            sim_start=sim.getSimulatedTime();*/
+            
+            first_sim=false;
             sim_start=sim.getSimulatedTime();
+            if( renderer.isInScene(arrow))
+            {            
+                /*curr_position=position;
+                Vector3f crot=rotation.clone();
+            
+                curr_direction=Math3D.getTarget2(position, crot, 1.f);
+                sim_start=sim.getSimulatedTime();*/
+                
+                curr_position=position.clone();
+                Vector3f cpos=curr_position.clone();
+                cpos.y-=1;
+                Vector3f cposo=new Vector3f(),cpos2o=new Vector3f();
+                Vector3f rr=rotation.clone();
+                rr.x+=180;
+                Math3D.setRotation(arrow, rr);
+                arrow.localToWorld(curr_position, cposo);
+                arrow.localToWorld(cpos, cpos2o);
+                Math3D.setRotation(arrow, rotation);
+                curr_direction=cpos2o.subtractLocal(cposo);
+            }
         }
         
-        float max_step=time*0.0001f;
+        float max_step=time*0.00005f;
         
         Vector3f target=curr_position.clone();
         

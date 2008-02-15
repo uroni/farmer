@@ -27,6 +27,7 @@ public class InformationRenderer
     private MainForm mf;
     
     public static int TYPE_WURZEL=1;
+    public static int TYPE_KORN=2;
     
     public InformationRenderer(PositionControl pc, MainForm mf)
     {
@@ -52,11 +53,13 @@ public class InformationRenderer
             IRSave s=it.next();
             if( seltype!=s.type)
             {
-                s.panel.setVisible(false);
+                if( s.panel!=null)
+                    s.panel.setVisible(false);
             }
             else
             {
-                s.panel.setVisible(true);
+                if( s.panel!=null)
+                    s.panel.setVisible(true);
                 updateInformation(pc.sel, seltype);
             }
         }
@@ -68,6 +71,10 @@ public class InformationRenderer
         {
             return TYPE_WURZEL;
         }
+        else if(pos instanceof Korn)
+        {
+            return TYPE_KORN;
+        }
         else
             return 0;
     }
@@ -77,6 +84,10 @@ public class InformationRenderer
         if(type==TYPE_WURZEL)
         {
             mf.updateInformationWurzel((Wurzel)pos);
+        }
+        else if(type==TYPE_KORN)
+        {
+            mf.updateInformationKorn((Korn)pos);
         }
     }
 }

@@ -136,12 +136,12 @@ public class Segment implements Serializable
             points.add(p);
     }
     
-    private float calculateRadius(RPoint p)
+    public static float calculateRadius(RPoint p, boolean broot, Simulation sim)
     {
-        if( root)
-            return Settings.sim_root_thikness*FastMath.log((simulation.getSimulatedTime()-p.age)*Settings.sim_root_pointness+1);
+        if( broot)
+            return Settings.sim_root_thikness*FastMath.log((sim.getSimulatedTime()-p.age)*Settings.sim_root_pointness+1);
         else
-            return Settings.sim_spross_thikness*FastMath.log((simulation.getSimulatedTime()-p.age)*Settings.sim_spross_pointness+1);
+            return Settings.sim_spross_thikness*FastMath.log((sim.getSimulatedTime()-p.age)*Settings.sim_spross_pointness+1);
     }
     
     private void addBall(Vector3f pos)
@@ -171,7 +171,7 @@ public class Segment implements Serializable
             }                
         }
         rot.x+=90;
-        Vector3f [] pts=Math3D.getCircleSegments(curr.pos, rot, calculateRadius(curr));
+        Vector3f [] pts=Math3D.getCircleSegments(curr.pos, rot, calculateRadius(curr, root, simulation));
         Node node=null;
         Vector3f normal_start=new Vector3f();
         if( curr.korn!=null )

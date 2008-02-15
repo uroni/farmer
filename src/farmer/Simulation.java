@@ -288,6 +288,32 @@ public class Simulation implements Serializable
         return ret;
     }
     
+    public float getWaterAmountF(Vector3f p)
+    {
+        float ret=0;
+        ListIterator<Material> it=materials.listIterator();
+        while(it.hasNext())
+        {
+            Material m=it.next();
+            float r=m.getWaterF(p);
+            if( r!=-1)
+                ret+=r;
+        }
+        
+        return ret;
+    }
+    
+    public void setWaterAmountF(Vector3f p, float amount)
+    {
+        ListIterator<Material> it=materials.listIterator();
+        while(it.hasNext())
+        {
+            Material m=it.next();
+            m.setWaterF(p, amount);
+        }
+    }
+   
+    
     public void addWaterPoint(Vector3f p, float r, int amount)
     {
         ListIterator<Material> it=materials.listIterator();

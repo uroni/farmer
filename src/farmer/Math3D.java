@@ -202,6 +202,26 @@ public class Math3D
             Vector3f target=new Vector3f(0,0,1);
             Matrix4f mat=new Matrix4f();
             
+            /*rot.x=FastMath.DEG_TO_RAD*rot.x;
+            rot.y=FastMath.DEG_TO_RAD*rot.y;*/
+            rot.z=0;
+            mat.angleRotation(rot);
+            
+            Math3D.transformVec(target, mat);
+            target.normalizeLocal();
+
+            Vector3f end=pos.add(target.mult(distance));
+
+            return end;
+    }
+    
+    public static Vector3f getTarget2(Vector3f pos,Vector3f rot,float distance)
+    {
+            Vector3f target=new Vector3f(0,1,0);
+            Matrix4f mat=new Matrix4f();
+            
+            /*rot.x=FastMath.DEG_TO_RAD*rot.x;
+            rot.y=FastMath.DEG_TO_RAD*rot.y;*/
             rot.z=0;
             mat.angleRotation(rot);
             

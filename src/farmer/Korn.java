@@ -37,6 +37,7 @@ public class Korn implements Positionable, Serializable
     private transient int curr_kornnum;
     private transient Simulation sim;
     private transient int curr_wurzelnum=0;
+    private float water=Settings.sim_corn_initial_water;
 
     
     public Korn( Render3D renderer, Simulation sim)
@@ -139,6 +140,16 @@ public class Korn implements Positionable, Serializable
         model.updateWorldVectors();
         recalculateGravity();
         updatePositions();
+    }
+    
+    public void setWater(float w)
+    {
+        water=w;
+    }
+    
+    public float getWater()
+    {
+        return water;
     }
     
     public Vector3f getPosition()

@@ -252,6 +252,34 @@ public class Material implements Positionable, Serializable
         else
             return 0;
     }
+    
+    public float getWaterF(Vector3f point)
+    {
+        if( waterps!=null )
+        {
+            float r=waterps.getPoint(point);
+            if(r==-1)
+                return -1;
+            else
+            {
+                return r;
+            }
+        }
+        else
+            return 0;
+    }
+    
+    public void setWaterF(Vector3f p, float amount)
+    {
+        if( waterps!=null)
+        {
+            if( amount>1.f)
+                amount=1.f;
+            if( amount<0)
+                amount=0;
+            waterps.setPoint(p, amount);
+        }
+    }
             
     
     public void calculateDensity(float density)

@@ -82,10 +82,10 @@ public class Settings implements Serializable
     public static float sim_root_pointness=0.01f; 
     public static float sim_root_stage1_updatetime=0.f;
     public static float sim_root_stage2_updatetime=10.f;
-    public static float sim_root_stage3_updatetime=1000.f;
-    public static float sim_root_stage4_updatetime=10000.f;
-    public static float sim_root_stage5_updatetime=100000.f;
-    public static float sim_root_stage6_updatetime=1000000.f;
+    public static float sim_root_stage3_updatetime=100.f;
+    public static float sim_root_stage4_updatetime=1000.f;
+    public static float sim_root_stage5_updatetime=10000.f;
+    public static float sim_root_stage6_updatetime=100000.f;
     public static int sim_root_stage1_barrier=1000;
     public static int sim_root_stage2_barrier=10000;
     public static int sim_root_stage3_barrier=100000;
@@ -118,7 +118,7 @@ public class Settings implements Serializable
     public static float sim_calc_water_density_fac=2.f;
     public static float sim_calc_water_default=0.f;
     public static float view_water_pick_sphere_size=10.f;
-    public static boolean sim_calc_pointsearch_test_center=false;
+    public static boolean sim_calc_pointsearch_test_center=true;
     public static int sim_calc_density_random_percent=100;
     public static boolean sim_calc_density_stronger_interpolation=false;
     public static float sim_root_junction_interpolation_age=3000.f;
@@ -139,4 +139,20 @@ public class Settings implements Serializable
     public static float sim_calc_water_cappilaric_min=0.000003f;
     public static int sys_water_sim_gab=10;
     public static float sys_pointstore_precicion=10000.f;
+    public static float sim_temperature=20.f;
+    public static float sim_fertilitation=1.f;
+    public static float sim_corn_initial_water=300.f;
+    public static float sim_corn_water_distance_squared=0.5f;
+    public static float sim_corn_water_consum_mult=0.01f;
+    public static float sim_corn_water_critical=50.f;
+    public static float sim_root_max_speed=0.001f;
+    public static float sim_root_speed_func_spread=-1.f/100000000000.f;
+    public static float sim_root_speed_day_max=100000.f;
+    public static float sim_root_initial_speed=0.001f;
+    public static float sim_root_speed_rgt=0.1f;
+    public static float sim_root_speed_mult=1.f;
+    public static float sim_root_speed_min=30.f;
+    public static boolean sim_spross_light=true;
+    public static float sim_root_water_consumtion_mult=5.0f;
+    public static boolean sim_root_water_simulate=false;
 }
