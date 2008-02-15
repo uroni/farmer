@@ -205,7 +205,10 @@ public abstract class GrowableAdapter implements Positionable, Serializable
     {
         if( showArrow==false && b==true )
         {            
-            arrow.setSolidColor(ColorRGBA.red);
+            if( root)
+                arrow.setSolidColor(ColorRGBA.red);
+            else
+                arrow.setSolidColor(ColorRGBA.blue);
             arrow.setLocalTranslation(position);
             setRotation(rotation);
             
