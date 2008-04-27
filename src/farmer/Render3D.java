@@ -451,13 +451,13 @@ public class Render3D extends JMECanvasImplementor {
     
     public void removeFromSceneCol(Spatial node)
     {
-        colNode.attachChild(node);
+        colNode.detachChild(node);
         colNode.updateRenderState();
     }
     
     public void removeFromSceneMat(Spatial node)
     {
-        materialNode.attachChild(node);
+        materialNode.detachChild(node);
         materialNode.updateRenderState();
     }
     

@@ -46,6 +46,7 @@ public class Segment implements Serializable
     private static int number=1;
     private boolean root;
     private transient Korn korn;
+    //private boolean removed=false;
     
     public Segment(Render3D renderer, boolean use_detail, Simulation sim, Segment previous, Korn k, boolean root)
     {
@@ -105,12 +106,8 @@ public class Segment implements Serializable
     public void remove()
     {
         points.clear();
-        if( collidable)
-        {
-            renderer.removeFromSceneCol(trimesh);
-        }
-        else
-            renderer.removeFromScene(trimesh);
+        renderer.removeFromSceneCol(trimesh);
+        renderer.removeFromScene(trimesh);
     }
     
     public void add(RPoint p)
