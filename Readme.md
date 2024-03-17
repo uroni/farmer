@@ -1,6 +1,6 @@
 ### Simulation for a German youth science competition (2008)
 
-It simulates the growth of wheat roots.
+It simulates the growth of wheat.
 
 Implemented in Java & jMonkeyEngine.
 
